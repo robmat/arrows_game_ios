@@ -208,21 +208,38 @@ struct BoardView: View {
     ) {
         let body = snake.body
 
-        // Calculate segments to draw (tail collapses as p increases)
-        let segmentsToDraw = max(0, Int(CGFloat(body.count - 1) * (1.0 - p)))
-        let lastSegmentIndex = min(1 + segmentsToDraw, body.count - 1)
+        // Calculate exact tail position as float index (0 = head, body.count-1 = tail)
+        // As p goes 0→1, tailPosition goes (body.count-1)→0
+        let tailPosition = CGFloat(body.count - 1) * (1.0 - p)
+        let cellIndex = Int(tailPosition)
+        let fraction = tailPosition - CGFloat(cellIndex)
+
+        // Clamp indices to valid range
+        let fromIndex = min(cellIndex, body.count - 1)
+        let toIndex = min(cellIndex + 1, body.count - 1)
+
+        // Calculate interpolated start position
+        let fromCell = body[fromIndex]
+        let fromX = offsetX + CGFloat(fromCell.x) * cellSize + cellSize / 2
+        let fromY = offsetY + CGFloat(fromCell.y) * cellSize + cellSize / 2
+
+        var startX = fromX
+        var startY = fromY
+
+        if toIndex != fromIndex && fraction > 0.001 {
+            let toCell = body[toIndex]
+            let toX = offsetX + CGFloat(toCell.x) * cellSize + cellSize / 2
+            let toY = offsetY + CGFloat(toCell.y) * cellSize + cellSize / 2
+            // Interpolate from fromCell towards toCell
+            startX = fromX + fraction * (toX - fromX)
+            startY = fromY + fraction * (toY - fromY)
+        }
 
         var path = Path()
+        path.move(to: CGPoint(x: startX, y: startY))
 
-        // Start at the last visible segment (new tail position)
-        let last = body[lastSegmentIndex]
-        path.move(to: CGPoint(
-            x: offsetX + CGFloat(last.x) * cellSize + cellSize / 2,
-            y: offsetY + CGFloat(last.y) * cellSize + cellSize / 2
-        ))
-
-        // Draw curves for middle segments (from lastSegmentIndex-1 down to 1)
-        for i in stride(from: lastSegmentIndex - 1, through: 1, by: -1) {
+        // Draw curves for middle segments (from fromIndex-1 down to 1)
+        for i in stride(from: fromIndex - 1, through: 1, by: -1) {
             let prev = body[i + 1]
             let current = body[i]
             let next = body[i - 1]
@@ -242,16 +259,18 @@ struct BoardView: View {
             path.addQuadCurve(to: CGPoint(x: exitX, y: exitY), control: CGPoint(x: currX, y: currY))
         }
 
-        // Draw head segment curve
-        let prev = body[1]
-        let headEntryX = headCx0 + CGFloat((prev.x - body[0].x).clamped(to: -1...1)) * cornerRadius
-        let headEntryY = headCy0 + CGFloat((prev.y - body[0].y).clamped(to: -1...1)) * cornerRadius
+        // Draw head segment curve (only if we have more than 1 cell visible)
+        if fromIndex >= 1 {
+            let prev = body[1]
+            let headEntryX = headCx0 + CGFloat((prev.x - body[0].x).clamped(to: -1...1)) * cornerRadius
+            let headEntryY = headCy0 + CGFloat((prev.y - body[0].y).clamped(to: -1...1)) * cornerRadius
 
-        path.addLine(to: CGPoint(x: headEntryX, y: headEntryY))
-        path.addQuadCurve(
-            to: CGPoint(x: baseLineEndX0, y: baseLineEndY0),
-            control: CGPoint(x: headCx0, y: headCy0)
-        )
+            path.addLine(to: CGPoint(x: headEntryX, y: headEntryY))
+            path.addQuadCurve(
+                to: CGPoint(x: baseLineEndX0, y: baseLineEndY0),
+                control: CGPoint(x: headCx0, y: headCy0)
+            )
+        }
 
         // If removing, extend line to shifted head position
         if p > 0 {
