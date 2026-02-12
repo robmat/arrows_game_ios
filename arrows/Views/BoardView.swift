@@ -311,8 +311,9 @@ struct BoardView: View {
             path.addQuadCurve(to: CGPoint(x: exitX, y: exitY), control: CGPoint(x: currX, y: currY))
         }
 
-        // Draw head segment curve (only if we have more than 1 cell visible)
+        // Draw head segment curve
         if fromIndex >= 1 {
+            // Full head curve
             let prev = body[1]
             let headEntryX = headCx0 + CGFloat((prev.x - body[0].x).clamped(to: -1...1)) * cornerRadius
             let headEntryY = headCy0 + CGFloat((prev.y - body[0].y).clamped(to: -1...1)) * cornerRadius
@@ -322,6 +323,35 @@ struct BoardView: View {
                 to: CGPoint(x: baseLineEndX0, y: baseLineEndY0),
                 control: CGPoint(x: headCx0, y: headCy0)
             )
+        } else if fromIndex == 0 && fraction > 0.001 && body.count > 1 {
+            // Partial head curve - we're in the middle of removing the head segment
+            let prev = body[1]
+            let headEntry = CGPoint(
+                x: headCx0 + CGFloat((prev.x - body[0].x).clamped(to: -1...1)) * cornerRadius,
+                y: headCy0 + CGFloat((prev.y - body[0].y).clamped(to: -1...1)) * cornerRadius
+            )
+            let headCenter = CGPoint(x: headCx0, y: headCy0)
+            let headExit = CGPoint(x: baseLineEndX0, y: baseLineEndY0)
+
+            // t parameter: fraction represents how far we are towards cell 1 (away from head)
+            // So we want to start at t = (1 - fraction) on the head curve
+            let t = 1.0 - fraction
+
+            // Quadratic Bezier point at parameter t
+            let mt = 1.0 - t
+            let startPoint = CGPoint(
+                x: mt * mt * headEntry.x + 2 * mt * t * headCenter.x + t * t * headExit.x,
+                y: mt * mt * headEntry.y + 2 * mt * t * headCenter.y + t * t * headExit.y
+            )
+
+            path.move(to: startPoint)
+
+            // Draw remaining part of head curve using de Casteljau subdivision
+            let partialControl = CGPoint(
+                x: headCenter.x + t * (headExit.x - headCenter.x),
+                y: headCenter.y + t * (headExit.y - headCenter.y)
+            )
+            path.addQuadCurve(to: headExit, control: partialControl)
         }
 
         // If removing, extend line to shifted head position
