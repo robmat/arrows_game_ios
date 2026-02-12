@@ -7,6 +7,14 @@
 
 import SwiftUI
 
+extension Int {
+    func clamped(to range: ClosedRange<Int>) -> Int {
+        if self < range.lowerBound { return range.lowerBound }
+        if self > range.upperBound { return range.upperBound }
+        return self
+    }
+}
+
 struct BoardView: View {
     @EnvironmentObject var preferences: UserPreferences
     @ObservedObject var engine: GameEngine
@@ -94,164 +102,160 @@ struct BoardView: View {
         guard !snake.body.isEmpty else { return }
 
         let strokeWidth = cellSize * GameConstants.snakeTailWidth
+        let cornerRadius = cellSize * GameConstants.arrowHeadOffset
 
-        // Calculate color and alpha
+        // Progress p: 0 = normal, 1 = fully removed
+        let p = CGFloat(removalProgress ?? 0)
+
+        // Head slides out by shift amount
+        let shift = cellSize * GameConstants.snakeMoveDistFactor * p
+
+        // Alpha fades from 1 to 0
+        var alpha = 1.0 - p
+
+        // Color and flashing
         var color = snakeColor
-        var alpha: CGFloat = 1.0
-
         if isFlashing {
             color = CommonColors.flashingRed
-            alpha = flashPhase
+            alpha = alpha * flashPhase
         }
 
-        if let progress = removalProgress {
-            alpha = 1.0 - CGFloat(progress)
-        }
+        // Original head position (without shift)
+        let head = snake.body[0]
+        let headCx0 = offsetX + CGFloat(head.x) * cellSize + cellSize / 2
+        let headCy0 = offsetY + CGFloat(head.y) * cellSize + cellSize / 2
 
-        // Calculate movement offset for removal animation
-        var moveOffsetX: CGFloat = 0
-        var moveOffsetY: CGFloat = 0
+        // Shifted head position (slides out during removal)
+        let headCx = headCx0 + CGFloat(snake.headDirection.dx) * shift
+        let headCy = headCy0 + CGFloat(snake.headDirection.dy) * shift
 
-        if let progress = removalProgress {
-            let moveDist = cellSize * GameConstants.snakeMoveDistFactor * CGFloat(progress)
-            moveOffsetX = CGFloat(snake.headDirection.dx) * moveDist
-            moveOffsetY = CGFloat(snake.headDirection.dy) * moveDist
-        }
+        // Line end positions (where arrow head attaches)
+        let lineEndX = headCx + CGFloat(snake.headDirection.dx) * cornerRadius
+        let lineEndY = headCy + CGFloat(snake.headDirection.dy) * cornerRadius
 
-        // Convert body points to screen coordinates (cell centers)
-        let points = snake.body.map { point -> CGPoint in
-            CGPoint(
-                x: offsetX + CGFloat(point.x) * cellSize + cellSize / 2 + moveOffsetX,
-                y: offsetY + CGFloat(point.y) * cellSize + cellSize / 2 + moveOffsetY
+        // Base line end (original position, used for curve end point)
+        let baseLineEndX0 = headCx0 + CGFloat(snake.headDirection.dx) * cornerRadius
+        let baseLineEndY0 = headCy0 + CGFloat(snake.headDirection.dy) * cornerRadius
+
+        let snakeColor = color.opacity(alpha)
+
+        if snake.body.count > 1 {
+            // Multi-cell snake
+            drawSnakeBody(
+                context: context,
+                snake: snake,
+                cellSize: cellSize,
+                offsetX: offsetX,
+                offsetY: offsetY,
+                cornerRadius: cornerRadius,
+                strokeWidth: strokeWidth,
+                p: p,
+                headCx0: headCx0,
+                headCy0: headCy0,
+                baseLineEndX0: baseLineEndX0,
+                baseLineEndY0: baseLineEndY0,
+                lineEndX: lineEndX,
+                lineEndY: lineEndY,
+                color: snakeColor
+            )
+        } else {
+            // Single cell snake - draw short tail
+            let tailLength = cellSize * 0.2
+            let tailStartX = lineEndX - CGFloat(snake.headDirection.dx) * (tailLength + cornerRadius)
+            let tailStartY = lineEndY - CGFloat(snake.headDirection.dy) * (tailLength + cornerRadius)
+
+            var path = Path()
+            path.move(to: CGPoint(x: tailStartX, y: tailStartY))
+            path.addLine(to: CGPoint(x: lineEndX, y: lineEndY))
+
+            context.stroke(
+                path,
+                with: .color(snakeColor),
+                style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round, lineJoin: .round)
             )
         }
 
-        let curveRadius = cellSize * GameConstants.arrowHeadOffset
+        // Draw arrow head at shifted position
+        let arrowHeadSize = cellSize * GameConstants.arrowHeadLength
+        let triangleCenterX = lineEndX + CGFloat(snake.headDirection.dx) * (arrowHeadSize * 0.5)
+        let triangleCenterY = lineEndY + CGFloat(snake.headDirection.dy) * (arrowHeadSize * 0.5)
 
-        // Calculate where tail should end (at arrow head base)
-        let arrowHeadOffset = cellSize * GameConstants.arrowHeadOffset
-        let arrowHeadLength = cellSize * GameConstants.arrowHeadLength
-        let tailEndOffset = arrowHeadOffset - arrowHeadLength * 0.3
-
-        // Draw the entire snake body with curves at all turns
-        drawSnakeBody(
-            context: context,
-            snake: snake,
-            points: points,
-            cellSize: cellSize,
-            curveRadius: curveRadius,
-            tailEndOffset: tailEndOffset,
-            strokeWidth: strokeWidth,
-            color: color.opacity(alpha)
-        )
-
-        // Draw arrow head at edge of cell
-        let arrowHeadPosition = CGPoint(
-            x: points[0].x + CGFloat(snake.headDirection.dx) * arrowHeadOffset,
-            y: points[0].y + CGFloat(snake.headDirection.dy) * arrowHeadOffset
-        )
         drawArrowHead(
             context: context,
-            at: arrowHeadPosition,
+            at: CGPoint(x: triangleCenterX, y: triangleCenterY),
             direction: snake.headDirection,
             cellSize: cellSize,
-            color: color.opacity(alpha)
+            color: snakeColor
         )
     }
 
     private func drawSnakeBody(
         context: GraphicsContext,
         snake: Snake,
-        points: [CGPoint],
         cellSize: CGFloat,
-        curveRadius: CGFloat,
-        tailEndOffset: CGFloat,
+        offsetX: CGFloat,
+        offsetY: CGFloat,
+        cornerRadius: CGFloat,
         strokeWidth: CGFloat,
+        p: CGFloat,
+        headCx0: CGFloat,
+        headCy0: CGFloat,
+        baseLineEndX0: CGFloat,
+        baseLineEndY0: CGFloat,
+        lineEndX: CGFloat,
+        lineEndY: CGFloat,
         color: Color
     ) {
-        guard !points.isEmpty else { return }
+        let body = snake.body
+
+        // Calculate segments to draw (tail collapses as p increases)
+        let segmentsToDraw = max(0, Int(CGFloat(body.count - 1) * (1.0 - p)))
+        let lastSegmentIndex = min(1 + segmentsToDraw, body.count - 1)
 
         var path = Path()
 
-        if points.count == 1 {
-            // Single cell snake - draw short tail
-            let headCenter = points[0]
-            let tailStart = CGPoint(
-                x: headCenter.x - CGFloat(snake.headDirection.dx) * curveRadius,
-                y: headCenter.y - CGFloat(snake.headDirection.dy) * curveRadius
-            )
-            let tailEnd = CGPoint(
-                x: headCenter.x + CGFloat(snake.headDirection.dx) * tailEndOffset,
-                y: headCenter.y + CGFloat(snake.headDirection.dy) * tailEndOffset
-            )
-            path.move(to: tailStart)
-            path.addLine(to: tailEnd)
-        } else {
-            // Multi-cell snake - draw with curves at all direction changes
-            // Start from the tail and work towards the head
+        // Start at the last visible segment (new tail position)
+        let last = body[lastSegmentIndex]
+        path.move(to: CGPoint(
+            x: offsetX + CGFloat(last.x) * cellSize + cellSize / 2,
+            y: offsetY + CGFloat(last.y) * cellSize + cellSize / 2
+        ))
 
-            // Begin at the tail (last point)
-            let tailIndex = points.count - 1
-            path.move(to: points[tailIndex])
+        // Draw curves for middle segments (from lastSegmentIndex-1 down to 1)
+        for i in stride(from: lastSegmentIndex - 1, through: 1, by: -1) {
+            let prev = body[i + 1]
+            let current = body[i]
+            let next = body[i - 1]
 
-            // Draw segments from tail towards head
-            for i in stride(from: tailIndex - 1, through: 0, by: -1) {
-                let currentCenter = points[i]
+            let currX = offsetX + CGFloat(current.x) * cellSize + cellSize / 2
+            let currY = offsetY + CGFloat(current.y) * cellSize + cellSize / 2
 
-                // Determine incoming direction (from previous cell to current)
-                let incomingDir = directionFrom(snake.body[i + 1], to: snake.body[i])
+            // Entry point (from previous cell direction)
+            let entryX = currX + CGFloat((prev.x - current.x).clamped(to: -1...1)) * cornerRadius
+            let entryY = currY + CGFloat((prev.y - current.y).clamped(to: -1...1)) * cornerRadius
 
-                // Determine outgoing direction
-                let outgoingDir: Direction
-                if i == 0 {
-                    // Head cell - outgoing is the head direction
-                    outgoingDir = snake.headDirection
-                } else {
-                    // Middle cell - outgoing is direction to next cell
-                    outgoingDir = directionFrom(snake.body[i], to: snake.body[i - 1])
-                }
+            // Exit point (towards next cell direction)
+            let exitX = currX + CGFloat((next.x - current.x).clamped(to: -1...1)) * cornerRadius
+            let exitY = currY + CGFloat((next.y - current.y).clamped(to: -1...1)) * cornerRadius
 
-                let hasTurn = incomingDir != outgoingDir
+            path.addLine(to: CGPoint(x: entryX, y: entryY))
+            path.addQuadCurve(to: CGPoint(x: exitX, y: exitY), control: CGPoint(x: currX, y: currY))
+        }
 
-                if hasTurn {
-                    // Draw line to curve start, then curve
-                    let curveStart = CGPoint(
-                        x: currentCenter.x - CGFloat(incomingDir.dx) * curveRadius,
-                        y: currentCenter.y - CGFloat(incomingDir.dy) * curveRadius
-                    )
+        // Draw head segment curve
+        let prev = body[1]
+        let headEntryX = headCx0 + CGFloat((prev.x - body[0].x).clamped(to: -1...1)) * cornerRadius
+        let headEntryY = headCy0 + CGFloat((prev.y - body[0].y).clamped(to: -1...1)) * cornerRadius
 
-                    let curveEnd: CGPoint
-                    if i == 0 {
-                        // Head cell - end at arrow head base
-                        curveEnd = CGPoint(
-                            x: currentCenter.x + CGFloat(outgoingDir.dx) * tailEndOffset,
-                            y: currentCenter.y + CGFloat(outgoingDir.dy) * tailEndOffset
-                        )
-                    } else {
-                        // Middle cell - end at edge towards next cell
-                        curveEnd = CGPoint(
-                            x: currentCenter.x + CGFloat(outgoingDir.dx) * curveRadius,
-                            y: currentCenter.y + CGFloat(outgoingDir.dy) * curveRadius
-                        )
-                    }
+        path.addLine(to: CGPoint(x: headEntryX, y: headEntryY))
+        path.addQuadCurve(
+            to: CGPoint(x: baseLineEndX0, y: baseLineEndY0),
+            control: CGPoint(x: headCx0, y: headCy0)
+        )
 
-                    path.addLine(to: curveStart)
-                    path.addQuadCurve(to: curveEnd, control: currentCenter)
-                } else {
-                    // No turn - draw straight through
-                    if i == 0 {
-                        // Head cell - end at arrow head base
-                        let tailEnd = CGPoint(
-                            x: currentCenter.x + CGFloat(outgoingDir.dx) * tailEndOffset,
-                            y: currentCenter.y + CGFloat(outgoingDir.dy) * tailEndOffset
-                        )
-                        path.addLine(to: tailEnd)
-                    } else {
-                        // Middle cell - continue to next cell center
-                        path.addLine(to: currentCenter)
-                    }
-                }
-            }
+        // If removing, extend line to shifted head position
+        if p > 0 {
+            path.addLine(to: CGPoint(x: lineEndX, y: lineEndY))
         }
 
         context.stroke(

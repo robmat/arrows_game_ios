@@ -50,8 +50,8 @@ class GameEngine: ObservableObject {
     }
 
     // MARK: - Initialization
-    init(preferences: UserPreferences = UserPreferences.shared) {
-        self.preferences = preferences
+    init(preferences: UserPreferences? = nil) {
+        self.preferences = preferences ?? UserPreferences.shared
         loadSavedState()
     }
 
@@ -135,26 +135,26 @@ class GameEngine: ObservableObject {
         isGameWon = false
         isGameOver = false
 
-        Task {
-            let config = LevelProgression.calculateLevelConfiguration(levelNum: levelNumber)
+        let config = LevelProgression.calculateLevelConfiguration(levelNum: levelNumber)
+        let generator = self.gameGenerator
 
+        Task.detached { [weak self] in
             let params = GenerationParams(
                 width: config.width,
                 height: config.height,
                 maxSnakeLength: config.maxSnakeLength,
                 fillTheBoard: false,
-                onProgress: { [weak self] progress in
+                onProgress: { progress in
                     Task { @MainActor in
                         self?.loadingProgress = progress
                     }
                 }
             )
 
-            let newLevel = await Task.detached { [gameGenerator] in
-                gameGenerator.generateSolvableLevel(params: params)
-            }.value
+            let newLevel = generator.generateSolvableLevel(params: params)
 
-            await MainActor.run {
+            await MainActor.run { [weak self] in
+                guard let self = self else { return }
                 self.initialLevel = newLevel
                 self.level = newLevel
                 self.totalSnakesInLevel = newLevel.snakes.count

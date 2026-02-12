@@ -17,8 +17,6 @@ struct GameTopBar: View {
     let onHint: () -> Void
 
     var body: some View {
-        let colors = preferences.theme.colors
-
         HStack {
             // Back Button
             TopBarButton(icon: "chevron.left", action: onBack)
