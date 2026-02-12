@@ -208,37 +208,91 @@ struct BoardView: View {
     ) {
         let body = snake.body
 
-        // Calculate exact tail position as float index (0 = head, body.count-1 = tail)
-        // As p goes 0→1, tailPosition goes (body.count-1)→0
+        // Helper to get cell screen position
+        func cellPos(_ i: Int) -> CGPoint {
+            let cell = body[i]
+            return CGPoint(
+                x: offsetX + CGFloat(cell.x) * cellSize + cellSize / 2,
+                y: offsetY + CGFloat(cell.y) * cellSize + cellSize / 2
+            )
+        }
+
+        // Check if there's a curve at a cell (direction change)
+        func hasCurve(at i: Int) -> Bool {
+            guard i > 0 && i < body.count - 1 else { return false }
+            let prev = body[i + 1]
+            let curr = body[i]
+            let next = body[i - 1]
+            // Curve exists if incoming and outgoing directions are not opposite
+            return !((prev.x - curr.x == curr.x - next.x) && (prev.y - curr.y == curr.y - next.y))
+        }
+
+        // Calculate exact tail position as float index
         let tailPosition = CGFloat(body.count - 1) * (1.0 - p)
         let cellIndex = Int(tailPosition)
         let fraction = tailPosition - CGFloat(cellIndex)
 
-        // Clamp indices to valid range
         let fromIndex = min(cellIndex, body.count - 1)
         let toIndex = min(cellIndex + 1, body.count - 1)
 
-        // Calculate interpolated start position
-        let fromCell = body[fromIndex]
-        let fromX = offsetX + CGFloat(fromCell.x) * cellSize + cellSize / 2
-        let fromY = offsetY + CGFloat(fromCell.y) * cellSize + cellSize / 2
+        var path = Path()
 
-        var startX = fromX
-        var startY = fromY
+        // Handle start position - check if we're on a curve
+        let hasPartialCurve = fraction > 0.001 && toIndex != fromIndex && hasCurve(at: fromIndex)
 
-        if toIndex != fromIndex && fraction > 0.001 {
-            let toCell = body[toIndex]
-            let toX = offsetX + CGFloat(toCell.x) * cellSize + cellSize / 2
-            let toY = offsetY + CGFloat(toCell.y) * cellSize + cellSize / 2
-            // Interpolate from fromCell towards toCell
-            startX = fromX + fraction * (toX - fromX)
-            startY = fromY + fraction * (toY - fromY)
+        if hasPartialCurve && fromIndex > 0 && fromIndex < body.count - 1 {
+            // Starting in the middle of a curve - calculate point on curve
+            let prev = body[fromIndex + 1]
+            let curr = body[fromIndex]
+            let next = body[fromIndex - 1]
+
+            let center = cellPos(fromIndex)
+            let entry = CGPoint(
+                x: center.x + CGFloat((prev.x - curr.x).clamped(to: -1...1)) * cornerRadius,
+                y: center.y + CGFloat((prev.y - curr.y).clamped(to: -1...1)) * cornerRadius
+            )
+            let exit = CGPoint(
+                x: center.x + CGFloat((next.x - curr.x).clamped(to: -1...1)) * cornerRadius,
+                y: center.y + CGFloat((next.y - curr.y).clamped(to: -1...1)) * cornerRadius
+            )
+
+            // t parameter: 0 = entry, 1 = exit
+            // fraction represents how far we are towards toIndex (tail direction)
+            // So we want to start at t = (1 - fraction) on the curve
+            let t = 1.0 - fraction
+
+            // Quadratic Bezier point at parameter t
+            let mt = 1.0 - t
+            let startPoint = CGPoint(
+                x: mt * mt * entry.x + 2 * mt * t * center.x + t * t * exit.x,
+                y: mt * mt * entry.y + 2 * mt * t * center.y + t * t * exit.y
+            )
+
+            path.move(to: startPoint)
+
+            // Draw remaining part of curve using de Casteljau subdivision
+            // New control point for curve from t to 1: lerp(center, exit, t)
+            let partialControl = CGPoint(
+                x: center.x + t * (exit.x - center.x),
+                y: center.y + t * (exit.y - center.y)
+            )
+            path.addQuadCurve(to: exit, control: partialControl)
+        } else if fraction > 0.001 && toIndex != fromIndex {
+            // Starting on a straight segment - interpolate linearly
+            let from = cellPos(fromIndex)
+            let to = cellPos(toIndex)
+            let startPoint = CGPoint(
+                x: from.x + fraction * (to.x - from.x),
+                y: from.y + fraction * (to.y - from.y)
+            )
+            path.move(to: startPoint)
+        } else {
+            // At a cell center
+            path.move(to: cellPos(fromIndex))
         }
 
-        var path = Path()
-        path.move(to: CGPoint(x: startX, y: startY))
-
         // Draw curves for middle segments (from fromIndex-1 down to 1)
+        // Skip fromIndex since we already handled it above (partial or not)
         for i in stride(from: fromIndex - 1, through: 1, by: -1) {
             let prev = body[i + 1]
             let current = body[i]
@@ -247,11 +301,9 @@ struct BoardView: View {
             let currX = offsetX + CGFloat(current.x) * cellSize + cellSize / 2
             let currY = offsetY + CGFloat(current.y) * cellSize + cellSize / 2
 
-            // Entry point (from previous cell direction)
             let entryX = currX + CGFloat((prev.x - current.x).clamped(to: -1...1)) * cornerRadius
             let entryY = currY + CGFloat((prev.y - current.y).clamped(to: -1...1)) * cornerRadius
 
-            // Exit point (towards next cell direction)
             let exitX = currX + CGFloat((next.x - current.x).clamped(to: -1...1)) * cornerRadius
             let exitY = currY + CGFloat((next.y - current.y).clamped(to: -1...1)) * cornerRadius
 
