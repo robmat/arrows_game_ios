@@ -48,7 +48,6 @@ struct BoardView: View {
             .scaleEffect(engine.scale)
             .offset(x: engine.offsetX, y: engine.offsetY)
         }
-        .aspectRatio(CGFloat(engine.level.width) / CGFloat(engine.level.height), contentMode: .fit)
         .onAppear { startFlashTimer() }
         .onDisappear { flashTimer?.invalidate() }
     }
