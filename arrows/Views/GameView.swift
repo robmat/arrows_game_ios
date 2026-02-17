@@ -11,6 +11,7 @@ struct GameView: View {
     @EnvironmentObject var preferences: UserPreferences
     @StateObject private var engine = GameEngine()
     let navigateTo: (AppScreen) -> Void
+    @State private var showIntro = false
 
     var body: some View {
         let colors = preferences.theme.colors
@@ -67,9 +68,61 @@ struct GameView: View {
                 )
                 .transition(.opacity)
             }
+
+            // Intro Tutorial Overlay
+            if showIntro {
+                IntroOverlay {
+                    showIntro = false
+                    preferences.isIntroCompleted = true
+                }
+                .transition(.opacity)
+            }
         }
         .animation(.easeInOut, value: engine.isGameWon)
         .animation(.easeInOut, value: engine.isGameOver)
+        .animation(.easeInOut, value: showIntro)
+        .onChange(of: engine.isLoading) { isLoading in
+            if !isLoading && !preferences.isIntroCompleted {
+                showIntro = true
+            }
+        }
+    }
+}
+
+// MARK: - Intro Tutorial Overlay
+
+struct IntroOverlay: View {
+    @EnvironmentObject var preferences: UserPreferences
+    let onDismiss: () -> Void
+
+    var body: some View {
+        let colors = preferences.theme.colors
+
+        ZStack {
+            Color.black.opacity(0.85)
+                .ignoresSafeArea()
+                .onTapGesture {} // consume taps
+
+            VStack(spacing: 24) {
+                Text("Tap the arrowhead\nto remove the arrow")
+                    .font(.title2.bold())
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+
+                Button(action: onDismiss) {
+                    Text("Got it!")
+                        .font(.title3.bold())
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 12)
+                        .background(colors.accent)
+                        .cornerRadius(12)
+                }
+            }
+            .padding(32)
+            .background(Color.white.opacity(0.05))
+            .cornerRadius(16)
+        }
     }
 }
 

@@ -32,6 +32,7 @@ class UserPreferences: ObservableObject {
         static let currentLevel = "currentLevel"
         static let maxLives = "maxLives"
         static let currentLives = "currentLives"
+        static let isIntroCompleted = "isIntroCompleted"
     }
 
     // MARK: - Published Properties
@@ -85,6 +86,11 @@ class UserPreferences: ObservableObject {
                 defaults.removeObject(forKey: Keys.currentLevel)
             }
         }
+    }
+
+    var isIntroCompleted: Bool {
+        get { defaults.bool(forKey: Keys.isIntroCompleted) }
+        set { defaults.set(newValue, forKey: Keys.isIntroCompleted) }
     }
 
     var maxLives: Int {
