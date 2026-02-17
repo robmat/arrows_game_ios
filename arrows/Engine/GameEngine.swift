@@ -182,7 +182,11 @@ class GameEngine: ObservableObject {
     private func transformTapToGrid(tapPoint: CGPoint, containerSize: CGSize) -> CGPoint {
         // tapPoint is already in Canvas local coordinates (SwiftUI handles the transform)
         // Just convert from Canvas coordinates to grid cell coordinates
-        let cellSize = min(containerSize.width / CGFloat(level.width), containerSize.height / CGFloat(level.height))
+        // Must match the margin used in BoardView.drawBoard
+        let margin = min(containerSize.width, containerSize.height) * 0.05
+        let availableWidth = containerSize.width - margin * 2
+        let availableHeight = containerSize.height - margin * 2
+        let cellSize = min(availableWidth / CGFloat(level.width), availableHeight / CGFloat(level.height))
         let boardWidth = cellSize * CGFloat(level.width)
         let boardHeight = cellSize * CGFloat(level.height)
         let leftOffset = (containerSize.width - boardWidth) / 2

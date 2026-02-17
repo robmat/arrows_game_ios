@@ -63,7 +63,11 @@ struct BoardView: View {
 
     private func drawBoard(context: GraphicsContext, size: CGSize) {
         let level = engine.level
-        let cellSize = min(size.width / CGFloat(level.width), size.height / CGFloat(level.height))
+        // Reserve margin so arrows on edge cells aren't clipped
+        let margin = min(size.width, size.height) * 0.05
+        let availableWidth = size.width - margin * 2
+        let availableHeight = size.height - margin * 2
+        let cellSize = min(availableWidth / CGFloat(level.width), availableHeight / CGFloat(level.height))
         let boardWidth = cellSize * CGFloat(level.width)
         let boardHeight = cellSize * CGFloat(level.height)
         let offsetX = (size.width - boardWidth) / 2

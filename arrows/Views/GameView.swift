@@ -32,6 +32,8 @@ struct GameView: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
 
+                Spacer()
+
                 // Game Board
                 if engine.isLoading {
                     LoadingView(progress: engine.loadingProgress)
