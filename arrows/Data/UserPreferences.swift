@@ -27,6 +27,7 @@ class UserPreferences: ObservableObject {
         static let animationSpeed = "animationSpeed"
         static let isVibrationEnabled = "isVibrationEnabled"
         static let isSoundsEnabled = "isSoundsEnabled"
+        static let isFillBoardEnabled = "isFillBoardEnabled"
         static let initialLevel = "initialLevel"
         static let currentLevel = "currentLevel"
         static let maxLives = "maxLives"
@@ -52,6 +53,10 @@ class UserPreferences: ObservableObject {
 
     @Published var isSoundsEnabled: Bool {
         didSet { defaults.set(isSoundsEnabled, forKey: Keys.isSoundsEnabled) }
+    }
+
+    @Published var isFillBoardEnabled: Bool {
+        didSet { defaults.set(isFillBoardEnabled, forKey: Keys.isFillBoardEnabled) }
     }
 
     var initialLevel: GameLevel? {
@@ -99,7 +104,11 @@ class UserPreferences: ObservableObject {
         animationSpeed = AnimationSpeed(rawValue: defaults.string(forKey: Keys.animationSpeed) ?? "") ?? .medium
         isVibrationEnabled = defaults.object(forKey: Keys.isVibrationEnabled) as? Bool ?? true
         isSoundsEnabled = defaults.object(forKey: Keys.isSoundsEnabled) as? Bool ?? true
+        isFillBoardEnabled = defaults.object(forKey: Keys.isFillBoardEnabled) as? Bool ?? false
     }
+
+    // MARK: - Transient State (not persisted)
+    var pendingCustomGame: CustomGameConfig?
 
     // MARK: - Methods
     func clearSavedGame() {

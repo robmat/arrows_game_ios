@@ -15,6 +15,7 @@ struct WinCelebrationView: View {
     @State private var opacity: CGFloat = 0
     @State private var confettiParticles: [ConfettiParticle] = []
     @State private var showContinueButton = false
+    @State private var hasContinued = false
 
     var body: some View {
         let colors = preferences.theme.colors
@@ -52,7 +53,7 @@ struct WinCelebrationView: View {
 
                 // Continue button
                 if showContinueButton {
-                    Button(action: onContinue) {
+                    Button(action: safeContinue) {
                         HStack {
                             Text("Continue")
                                 .font(.title2.bold())
@@ -96,8 +97,14 @@ struct WinCelebrationView: View {
 
         // Auto-continue after total duration
         DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.videoTotalDuration) {
-            onContinue()
+            safeContinue()
         }
+    }
+
+    private func safeContinue() {
+        guard !hasContinued else { return }
+        hasContinued = true
+        onContinue()
     }
 
     private func generateConfetti() {

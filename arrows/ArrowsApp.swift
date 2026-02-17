@@ -35,6 +35,8 @@ struct ContentView: View {
                 GameView(navigateTo: { currentScreen = $0 })
             case .settings:
                 SettingsView(navigateTo: { currentScreen = $0 })
+            case .generator:
+                GeneratorView(navigateTo: { currentScreen = $0 })
             }
         }
         .preferredColorScheme(.dark)
@@ -45,4 +47,5 @@ enum AppScreen {
     case mainMenu
     case game
     case settings
+    case generator
 }

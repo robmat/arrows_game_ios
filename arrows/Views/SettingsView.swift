@@ -92,6 +92,13 @@ struct SettingsView: View {
                                 icon: "speaker.wave.2.fill",
                                 isOn: $preferences.isSoundsEnabled
                             )
+
+                            // Fill Board Toggle
+                            SettingsToggle(
+                                title: "Fill board (slower)",
+                                icon: "square.grid.4x3.fill",
+                                isOn: $preferences.isFillBoardEnabled
+                            )
                         }
                     }
 

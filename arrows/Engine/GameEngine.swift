@@ -9,6 +9,12 @@ import Foundation
 import Combine
 import SwiftUI
 
+struct CustomGameConfig {
+    let width: Int
+    let height: Int
+    let shapeName: String? // nil = rectangular
+}
+
 @MainActor
 class GameEngine: ObservableObject {
     // MARK: - Published State
@@ -57,6 +63,13 @@ class GameEngine: ObservableObject {
 
     private func loadSavedState() {
         levelNumber = preferences.levelNumber
+
+        // Check for pending custom game from Generator
+        if let customConfig = preferences.pendingCustomGame {
+            preferences.pendingCustomGame = nil
+            generateCustomLevel(config: customConfig)
+            return
+        }
 
         if let savedLevel = preferences.currentLevel {
             initialLevel = preferences.initialLevel ?? savedLevel
@@ -143,7 +156,7 @@ class GameEngine: ObservableObject {
                 width: config.width,
                 height: config.height,
                 maxSnakeLength: config.maxSnakeLength,
-                fillTheBoard: false,
+                fillTheBoard: UserPreferences.shared.isFillBoardEnabled,
                 onProgress: { progress in
                     Task { @MainActor in
                         self?.loadingProgress = progress
@@ -175,6 +188,57 @@ class GameEngine: ObservableObject {
         preferences.clearSavedGame()
         initialLevel = nil
         regenerateLevel()
+    }
+
+    func generateCustomLevel(config: CustomGameConfig) {
+        preferences.clearSavedGame()
+        initialLevel = nil
+
+        isLoading = true
+        loadingProgress = 0
+        isGameWon = false
+        isGameOver = false
+
+        let levelConfig = LevelProgression.calculateLevelConfiguration(
+            levelNum: levelNumber,
+            forcedWidth: config.width,
+            forcedHeight: config.height
+        )
+
+        let boardShape: BoardShape? = config.shapeName.flatMap { ShapeRegistry.boardShape(for: $0) }
+        let fillBoard = preferences.isFillBoardEnabled
+        let generator = self.gameGenerator
+
+        Task.detached { [weak self] in
+            let params = GenerationParams(
+                width: config.width,
+                height: config.height,
+                maxSnakeLength: levelConfig.maxSnakeLength,
+                fillTheBoard: fillBoard,
+                boardShape: boardShape,
+                onProgress: { progress in
+                    Task { @MainActor in
+                        self?.loadingProgress = progress
+                    }
+                }
+            )
+
+            let newLevel = generator.generateSolvableLevel(params: params)
+
+            await MainActor.run { [weak self] in
+                guard let self = self else { return }
+                self.initialLevel = newLevel
+                self.level = newLevel
+                self.totalSnakesInLevel = newLevel.snakes.count
+                self.maxLives = levelConfig.maxLives
+                self.lives = levelConfig.maxLives
+                self.resetTransformation()
+                self.clearFlash()
+                self.clearRemovalProgress()
+                self.isLoading = false
+                self.saveInitialState()
+            }
+        }
     }
 
     // MARK: - Private Methods

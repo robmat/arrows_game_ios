@@ -11,6 +11,10 @@ struct MainMenuView: View {
     @EnvironmentObject var preferences: UserPreferences
     let navigateTo: (AppScreen) -> Void
 
+    private var isGeneratorUnlocked: Bool {
+        preferences.levelNumber >= GameConstants.generatorUnlockLevel
+    }
+
     var body: some View {
         let colors = preferences.theme.colors
 
@@ -51,6 +55,20 @@ struct MainMenuView: View {
                 .cornerRadius(16)
             }
             .padding(.horizontal, 40)
+
+            // Generator Button
+            Button(action: {
+                navigateTo(.generator)
+            }) {
+                HStack {
+                    Image(systemName: isGeneratorUnlocked ? "sparkles" : "lock.fill")
+                        .font(.title3)
+                    Text(isGeneratorUnlocked ? "Generator" : "Generator (Level \(GameConstants.generatorUnlockLevel))")
+                        .font(.title3)
+                }
+                .foregroundColor(isGeneratorUnlocked ? colors.accent : .gray)
+            }
+            .disabled(!isGeneratorUnlocked)
 
             // Settings Button
             Button(action: {

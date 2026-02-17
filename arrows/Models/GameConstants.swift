@@ -17,6 +17,12 @@ enum GameConstants {
     static let maxFillBoardSize = 35
     static let firstSnakeMaxAttempts = 100
 
+    // MARK: - Custom Generator
+    static let generatorMinSize: Float = 20
+    static let generatorMaxSize: Float = 100
+    static let generatorMaxSizeFillBoard: Float = 35
+    static let generatorDefaultSize: Float = 35
+
     // MARK: - Game Flow & Animations
     static let gameWonExitDelay: TimeInterval = 3.0
     static let guidanceAnimDuration: TimeInterval = 0.5
