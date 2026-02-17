@@ -18,6 +18,7 @@ extension Int {
 struct BoardView: View {
     @EnvironmentObject var preferences: UserPreferences
     @ObservedObject var engine: GameEngine
+    var guidanceAlpha: CGFloat = 0
     @State private var flashPhase: CGFloat = 1.0
     @State private var flashTimer: Timer?
 
@@ -86,6 +87,19 @@ struct BoardView: View {
 
         let colors = preferences.theme.colors
 
+        // Draw guidance lines
+        if guidanceAlpha > 0 {
+            drawGuidanceLines(
+                context: context,
+                level: level,
+                cellSize: cellSize,
+                offsetX: offsetX,
+                offsetY: offsetY,
+                canvasSize: size,
+                accentColor: colors.accent
+            )
+        }
+
         // Draw each snake
         for snake in level.snakes {
             let isFlashing = engine.flashingSnakeId == snake.id
@@ -100,6 +114,72 @@ struct BoardView: View {
                 snakeColor: colors.snake,
                 isFlashing: isFlashing,
                 removalProgress: removalProgress
+            )
+        }
+    }
+
+    private func drawGuidanceLines(
+        context: GraphicsContext,
+        level: GameLevel,
+        cellSize: CGFloat,
+        offsetX: CGFloat,
+        offsetY: CGFloat,
+        canvasSize: CGSize,
+        accentColor: Color
+    ) {
+        for snake in level.snakes {
+            // Skip snakes being removed
+            if engine.removalProgress[snake.id] != nil { continue }
+
+            let head = snake.body[0]
+            let headCx = offsetX + CGFloat(head.x) * cellSize + cellSize / 2
+            let headCy = offsetY + CGFloat(head.y) * cellSize + cellSize / 2
+
+            // Calculate arrow tip position (same math as drawSnake + drawArrowHead)
+            let cornerRadius = cellSize * GameConstants.arrowHeadOffset
+            let arrowHeadSize = cellSize * GameConstants.arrowHeadLength
+            let dx = CGFloat(snake.headDirection.dx)
+            let dy = CGFloat(snake.headDirection.dy)
+            let lineEndX = headCx + dx * cornerRadius
+            let lineEndY = headCy + dy * cornerRadius
+            let triangleCenterX = lineEndX + dx * (arrowHeadSize * 0.5)
+            let triangleCenterY = lineEndY + dy * (arrowHeadSize * 0.5)
+            let tipX = triangleCenterX + dx * arrowHeadSize
+            let tipY = triangleCenterY + dy * arrowHeadSize
+
+            // Calculate full end point (edge of canvas)
+            let fullEnd: CGPoint
+            switch snake.headDirection {
+            case .up:
+                fullEnd = CGPoint(x: tipX, y: 0)
+            case .down:
+                fullEnd = CGPoint(x: tipX, y: canvasSize.height)
+            case .left:
+                fullEnd = CGPoint(x: 0, y: tipY)
+            case .right:
+                fullEnd = CGPoint(x: canvasSize.width, y: tipY)
+            }
+
+            // Animate end point based on guidanceAlpha
+            let endPoint = CGPoint(
+                x: tipX + (fullEnd.x - tipX) * guidanceAlpha,
+                y: tipY + (fullEnd.y - tipY) * guidanceAlpha
+            )
+
+            let alpha = GameConstants.guidanceLineAlphaFactor * guidanceAlpha
+
+            var path = Path()
+            path.move(to: CGPoint(x: tipX, y: tipY))
+            path.addLine(to: endPoint)
+
+            context.stroke(
+                path,
+                with: .color(accentColor.opacity(alpha)),
+                style: StrokeStyle(
+                    lineWidth: 2,
+                    lineCap: .round,
+                    dash: [GameConstants.guidanceDashOn, GameConstants.guidanceDashOff]
+                )
             )
         }
     }

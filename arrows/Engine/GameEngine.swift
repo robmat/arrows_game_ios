@@ -114,6 +114,10 @@ class GameEngine: ObservableObject {
         }
     }
 
+    func resetView() {
+        resetTransformation()
+    }
+
     func onTransform(translation: CGSize, scale: CGFloat) {
         self.scale = max(0.5, min(3.0, self.scale * scale))
         self.offsetX += translation.width

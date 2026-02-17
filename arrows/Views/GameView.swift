@@ -12,6 +12,8 @@ struct GameView: View {
     @StateObject private var engine = GameEngine()
     let navigateTo: (AppScreen) -> Void
     @State private var showIntro = false
+    @State private var showGuidanceLines = false
+    @State private var guidanceAlpha: CGFloat = 0
 
     var body: some View {
         let colors = preferences.theme.colors
@@ -39,11 +41,45 @@ struct GameView: View {
                 if engine.isLoading {
                     LoadingView(progress: engine.loadingProgress)
                 } else {
-                    BoardView(engine: engine)
+                    BoardView(engine: engine, guidanceAlpha: guidanceAlpha)
                         .padding()
                 }
 
                 Spacer()
+
+                // Bottom buttons
+                if !engine.isLoading {
+                    HStack {
+                        // Reset View button
+                        Button(action: { engine.resetView() }) {
+                            Image(systemName: "scope")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(colors.accent.opacity(0.3))
+                                .clipShape(Circle())
+                        }
+
+                        Spacer()
+
+                        // Guidance Lines toggle
+                        Button(action: {
+                            showGuidanceLines.toggle()
+                            withAnimation(.easeInOut(duration: GameConstants.guidanceAnimDuration)) {
+                                guidanceAlpha = showGuidanceLines ? 1 : 0
+                            }
+                        }) {
+                            Image(systemName: "grid")
+                                .font(.title3)
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(showGuidanceLines ? colors.accent : colors.accent.opacity(0.3))
+                                .clipShape(Circle())
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
+                }
             }
 
             // Win Celebration Overlay
