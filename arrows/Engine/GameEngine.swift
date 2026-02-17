@@ -369,7 +369,7 @@ class GameEngine: ObservableObject {
     private func flashSnake(id: Int) {
         flashingSnakeId = id
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: UInt64(GameConstants.flashPulseDuration * 2 * 1_000_000_000))
+            try? await Task.sleep(nanoseconds: UInt64(GameConstants.flashDuration * 1_000_000_000))
             if flashingSnakeId == id {
                 flashingSnakeId = nil
             }

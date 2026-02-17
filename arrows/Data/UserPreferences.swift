@@ -33,6 +33,7 @@ class UserPreferences: ObservableObject {
         static let maxLives = "maxLives"
         static let currentLives = "currentLives"
         static let isIntroCompleted = "isIntroCompleted"
+        static let isWinVideosEnabled = "isWinVideosEnabled"
     }
 
     // MARK: - Published Properties
@@ -58,6 +59,10 @@ class UserPreferences: ObservableObject {
 
     @Published var isFillBoardEnabled: Bool {
         didSet { defaults.set(isFillBoardEnabled, forKey: Keys.isFillBoardEnabled) }
+    }
+
+    @Published var isWinVideosEnabled: Bool {
+        didSet { defaults.set(isWinVideosEnabled, forKey: Keys.isWinVideosEnabled) }
     }
 
     var initialLevel: GameLevel? {
@@ -111,6 +116,7 @@ class UserPreferences: ObservableObject {
         isVibrationEnabled = defaults.object(forKey: Keys.isVibrationEnabled) as? Bool ?? true
         isSoundsEnabled = defaults.object(forKey: Keys.isSoundsEnabled) as? Bool ?? true
         isFillBoardEnabled = defaults.object(forKey: Keys.isFillBoardEnabled) as? Bool ?? false
+        isWinVideosEnabled = defaults.object(forKey: Keys.isWinVideosEnabled) as? Bool ?? false
     }
 
     // MARK: - Transient State (not persisted)

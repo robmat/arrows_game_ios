@@ -19,6 +19,7 @@ struct BoardView: View {
     @EnvironmentObject var preferences: UserPreferences
     @ObservedObject var engine: GameEngine
     @State private var flashPhase: CGFloat = 1.0
+    @State private var flashTimer: Timer?
 
     var body: some View {
         GeometryReader { geometry in
@@ -47,17 +48,27 @@ struct BoardView: View {
             .offset(x: engine.offsetX, y: engine.offsetY)
         }
         .aspectRatio(CGFloat(engine.level.width) / CGFloat(engine.level.height), contentMode: .fit)
-        .onAppear {
-            startFlashAnimation()
-        }
+        .onAppear { startFlashTimer() }
+        .onDisappear { flashTimer?.invalidate() }
     }
 
-    private func startFlashAnimation() {
-        withAnimation(
-            Animation.easeInOut(duration: GameConstants.flashPulseDuration)
-                .repeatForever(autoreverses: true)
-        ) {
-            flashPhase = GameConstants.flashMinAlpha
+    private func startFlashTimer() {
+        var goingDown = true
+        let step = CGFloat((1.0 - GameConstants.flashMinAlpha) / (GameConstants.flashPulseDuration / 0.016))
+        flashTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { _ in
+            if goingDown {
+                flashPhase -= step
+                if flashPhase <= GameConstants.flashMinAlpha {
+                    flashPhase = GameConstants.flashMinAlpha
+                    goingDown = false
+                }
+            } else {
+                flashPhase += step
+                if flashPhase >= 1.0 {
+                    flashPhase = 1.0
+                    goingDown = true
+                }
+            }
         }
     }
 

@@ -42,6 +42,7 @@ enum GameConstants {
     static let boardCornerRadiusFactor: CGFloat = 0.3
     static let snakeMoveDistFactor: CGFloat = 1.2
     static let arrowHeadStrokeWidthFactor: CGFloat = 0.3
+    static let flashDuration: TimeInterval = 3.0
     static let flashPulseDuration: TimeInterval = 0.25
     static let flashMinAlpha: CGFloat = 0.2
     static let arrowHeadCenterFactor: CGFloat = 0.5
@@ -65,6 +66,7 @@ enum GameConstants {
     static let defaultTolerance: CGFloat = 1.3
 
     // MARK: - Win Celebration
+    static let winVideosCount = 26
     static let videoFadeInDuration: TimeInterval = 1.0
     static let videoDisplayDuration: TimeInterval = 3.0
     static let videoFadeOutDuration: TimeInterval = 1.0

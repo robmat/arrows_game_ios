@@ -33,7 +33,7 @@ class SoundManager {
 
     func playTapSound() {
         guard isSoundsEnabled else { return }
-        playSound(named: "switch\(Int.random(in: 1...30))", extension: "wav")
+        playSound(named: "switch\(Int.random(in: 1...38))", extension: "wav")
     }
 
     func playSnakeRemoved() {

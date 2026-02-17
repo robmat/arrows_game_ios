@@ -93,6 +93,13 @@ struct SettingsView: View {
                                 isOn: $preferences.isSoundsEnabled
                             )
 
+                            // Win Videos Toggle
+                            SettingsToggle(
+                                title: "Win videos",
+                                icon: "film.fill",
+                                isOn: $preferences.isWinVideosEnabled
+                            )
+
                             // Fill Board Toggle
                             SettingsToggle(
                                 title: "Fill board (slower)",
