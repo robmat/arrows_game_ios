@@ -195,7 +195,7 @@ struct BoardView: View {
     ) {
         guard !snake.body.isEmpty else { return }
 
-        let strokeWidth = cellSize * GameConstants.snakeTailWidth
+        let strokeWidth = cellSize * preferences.arrowThickness.widthFactor
         let cornerRadius = cellSize * GameConstants.arrowHeadOffset
 
         // Progress p: 0 = normal, 1 = fully removed
@@ -270,7 +270,8 @@ struct BoardView: View {
         }
 
         // Draw arrow head at shifted position
-        let arrowHeadSize = cellSize * GameConstants.arrowHeadLength
+        let headScale = preferences.arrowThickness.headScaleFactor
+        let arrowHeadSize = cellSize * GameConstants.arrowHeadLength * headScale
         let triangleCenterX = lineEndX + CGFloat(snake.headDirection.dx) * (arrowHeadSize * 0.5)
         let triangleCenterY = lineEndY + CGFloat(snake.headDirection.dy) * (arrowHeadSize * 0.5)
 
@@ -477,8 +478,9 @@ struct BoardView: View {
         cellSize: CGFloat,
         color: Color
     ) {
-        let arrowLength = cellSize * GameConstants.arrowHeadLength
-        let arrowWidth = cellSize * GameConstants.arrowHeadWidth
+        let headScale = preferences.arrowThickness.headScaleFactor
+        let arrowLength = cellSize * GameConstants.arrowHeadLength * headScale
+        let arrowWidth = cellSize * GameConstants.arrowHeadWidth * headScale
         let angle: Double
 
         switch direction {

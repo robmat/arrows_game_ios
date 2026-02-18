@@ -79,6 +79,20 @@ struct SettingsView: View {
                                 .pickerStyle(SegmentedPickerStyle())
                             }
 
+                            // Arrow Thickness
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Arrow Thickness")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+
+                                Picker("Arrow Thickness", selection: $preferences.arrowThickness) {
+                                    ForEach(ArrowThickness.allCases, id: \.self) { thickness in
+                                        Text(thickness.rawValue).tag(thickness)
+                                    }
+                                }
+                                .pickerStyle(SegmentedPickerStyle())
+                            }
+
                             // Vibration Toggle
                             SettingsToggle(
                                 title: "Vibration",

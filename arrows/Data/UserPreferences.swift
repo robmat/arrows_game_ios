@@ -15,6 +15,28 @@ enum AnimationSpeed: String, CaseIterable {
     case low = "Low"
 }
 
+enum ArrowThickness: String, CaseIterable {
+    case thin = "Thin"
+    case medium = "Medium"
+    case thick = "Thick"
+
+    var widthFactor: CGFloat {
+        switch self {
+        case .thin: return 0.08
+        case .medium: return 0.14
+        case .thick: return 0.20
+        }
+    }
+
+    var headScaleFactor: CGFloat {
+        switch self {
+        case .thin: return 0.9
+        case .medium: return 1.3
+        case .thick: return 1.8
+        }
+    }
+}
+
 class UserPreferences: ObservableObject {
     static let shared = UserPreferences()
 
@@ -34,6 +56,7 @@ class UserPreferences: ObservableObject {
         static let currentLives = "currentLives"
         static let isIntroCompleted = "isIntroCompleted"
         static let isWinVideosEnabled = "isWinVideosEnabled"
+        static let arrowThickness = "arrowThickness"
     }
 
     // MARK: - Published Properties
@@ -63,6 +86,10 @@ class UserPreferences: ObservableObject {
 
     @Published var isWinVideosEnabled: Bool {
         didSet { defaults.set(isWinVideosEnabled, forKey: Keys.isWinVideosEnabled) }
+    }
+
+    @Published var arrowThickness: ArrowThickness {
+        didSet { defaults.set(arrowThickness.rawValue, forKey: Keys.arrowThickness) }
     }
 
     var initialLevel: GameLevel? {
@@ -117,6 +144,7 @@ class UserPreferences: ObservableObject {
         isSoundsEnabled = defaults.object(forKey: Keys.isSoundsEnabled) as? Bool ?? true
         isFillBoardEnabled = defaults.object(forKey: Keys.isFillBoardEnabled) as? Bool ?? false
         isWinVideosEnabled = defaults.object(forKey: Keys.isWinVideosEnabled) as? Bool ?? false
+        arrowThickness = ArrowThickness(rawValue: defaults.string(forKey: Keys.arrowThickness) ?? "") ?? .medium
     }
 
     // MARK: - Transient State (not persisted)
