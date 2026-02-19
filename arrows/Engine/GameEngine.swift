@@ -131,6 +131,12 @@ class GameEngine: ObservableObject {
         }
     }
 
+    func grantExtraLife() {
+        lives += 1
+        isGameOver = false
+        saveState()
+    }
+
     func onTap(at point: CGPoint, containerSize: CGSize) {
         guard !isLoading && lives > 0 && !isGameWon && !isGameOver else { return }
 

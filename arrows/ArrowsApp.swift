@@ -5,16 +5,31 @@
 //  SwiftUI App entry point
 //
 
+import GoogleMobileAds
 import SwiftUI
 
 @main
 struct ArrowsApp: App {
     @StateObject private var preferences = UserPreferences.shared
+    @StateObject private var interstitialAdManager = InterstitialAdManager()
+    @StateObject private var rewardedAdManager = RewardedAdManager()
+
+    init() {
+        MobileAds.initialize()
+    }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(preferences)
+                .environmentObject(interstitialAdManager)
+                .environmentObject(rewardedAdManager)
+                .onAppear {
+                    if !preferences.isAdFree {
+                        interstitialAdManager.loadAd()
+                        rewardedAdManager.loadAd()
+                    }
+                }
         }
     }
 }

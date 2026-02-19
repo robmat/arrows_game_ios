@@ -9,6 +9,8 @@ import SwiftUI
 
 struct GameView: View {
     @EnvironmentObject var preferences: UserPreferences
+    @EnvironmentObject var interstitialAdManager: InterstitialAdManager
+    @EnvironmentObject var rewardedAdManager: RewardedAdManager
     @StateObject private var engine = GameEngine()
     let navigateTo: (AppScreen) -> Void
     @State private var showIntro = false
@@ -30,7 +32,7 @@ struct GameView: View {
                     maxLives: engine.maxLives,
                     onBack: { navigateTo(.mainMenu) },
                     onRestart: { engine.restartLevel() },
-                    onHint: { engine.showHint() }
+                    onHint: { onHintRequested() }
                 )
                 .padding(.horizontal)
                 .padding(.top, 8)
@@ -78,7 +80,12 @@ struct GameView: View {
                         }
                     }
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 16)
+                    .padding(.bottom, 8)
+                }
+
+                if !preferences.isAdFree {
+                    BannerAdView()
+                        .frame(height: 50)
                 }
             }
 
@@ -86,7 +93,7 @@ struct GameView: View {
             if engine.isGameWon {
                 WinCelebrationView(
                     onContinue: {
-                        engine.nextLevel()
+                        onLevelCompleted()
                     }
                 )
                 .transition(.opacity)
@@ -100,7 +107,15 @@ struct GameView: View {
                     },
                     onMainMenu: {
                         navigateTo(.mainMenu)
-                    }
+                    },
+                    onWatchAd: preferences.isAdFree ? nil : {
+                        rewardedAdManager.showAd(
+                            onRewarded: { engine.grantExtraLife() },
+                            onDismissed: {}
+                        )
+                    },
+                    isAdLoaded: rewardedAdManager.isAdLoaded,
+                    isAdLoading: rewardedAdManager.isAdLoading
                 )
                 .transition(.opacity)
             }
@@ -121,6 +136,38 @@ struct GameView: View {
             if !isLoading && !preferences.isIntroCompleted {
                 showIntro = true
             }
+        }
+        .onChange(of: engine.isGameWon) { isWon in
+            if isWon {
+                preferences.gamesCompleted += 1
+            }
+        }
+    }
+
+    private func onHintRequested() {
+        guard !preferences.isAdFree && rewardedAdManager.isAdLoaded else {
+            engine.showHint()
+            return
+        }
+        var rewarded = false
+        rewardedAdManager.showAd(
+            onRewarded: { rewarded = true },
+            onDismissed: { if rewarded { engine.showHint() } }
+        )
+    }
+
+    private func onLevelCompleted() {
+        let shouldShowInterstitial = !preferences.isAdFree
+            && preferences.gamesCompleted > 0
+            && preferences.gamesCompleted % AdConstants.gamesBetweenInterstitials == 0
+            && interstitialAdManager.isAdLoaded
+
+        if shouldShowInterstitial {
+            interstitialAdManager.showAd {
+                engine.nextLevel()
+            }
+        } else {
+            engine.nextLevel()
         }
     }
 }
@@ -194,6 +241,9 @@ struct GameOverView: View {
     @EnvironmentObject var preferences: UserPreferences
     let onRetry: () -> Void
     let onMainMenu: () -> Void
+    let onWatchAd: (() -> Void)?
+    let isAdLoaded: Bool
+    let isAdLoading: Bool
 
     var body: some View {
         let colors = preferences.theme.colors
@@ -212,6 +262,15 @@ struct GameOverView: View {
                     .foregroundColor(.white)
 
                 VStack(spacing: 16) {
+                    if let onWatchAd {
+                        WatchAdForLifeButton(
+                            onWatchAd: onWatchAd,
+                            isAdLoaded: isAdLoaded,
+                            isAdLoading: isAdLoading,
+                            accentColor: colors.accent
+                        )
+                    }
+
                     Button(action: onRetry) {
                         HStack {
                             Image(systemName: "arrow.counterclockwise")
@@ -240,7 +299,40 @@ struct GameOverView: View {
     }
 }
 
+// MARK: - Watch Ad For Life Button
+
+private struct WatchAdForLifeButton: View {
+    let onWatchAd: () -> Void
+    let isAdLoaded: Bool
+    let isAdLoading: Bool
+    let accentColor: Color
+
+    private var label: String {
+        if isAdLoading { return "Loading Ad..." }
+        if !isAdLoaded { return "Ad Not Ready" }
+        return "Watch Ad → Get a Life"
+    }
+
+    var body: some View {
+        Button(action: onWatchAd) {
+            HStack {
+                Image(systemName: "play.rectangle.fill")
+                Text(label)
+            }
+            .font(.title3.bold())
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(accentColor.opacity(0.6))
+            .cornerRadius(12)
+        }
+        .disabled(!isAdLoaded || isAdLoading)
+    }
+}
+
 #Preview {
     GameView(navigateTo: { _ in })
         .environmentObject(UserPreferences.shared)
+        .environmentObject(InterstitialAdManager())
+        .environmentObject(RewardedAdManager())
 }

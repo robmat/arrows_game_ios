@@ -148,6 +148,11 @@ struct GeneratorView: View {
                 }
                 .padding()
             }
+
+            if !preferences.isAdFree {
+                BannerAdView()
+                    .frame(height: 50)
+            }
         }
         .onChange(of: maxSize) { newMax in
             if width > newMax { width = newMax }

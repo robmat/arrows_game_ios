@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var preferences: UserPreferences
+    @EnvironmentObject var rewardedAdManager: RewardedAdManager
     let navigateTo: (AppScreen) -> Void
     @State private var showResetConfirmation = false
 
@@ -123,6 +124,11 @@ struct SettingsView: View {
                         }
                     }
 
+                    // Remove Ads Section
+                    SettingsSection(title: "Ads") {
+                        RemoveAdsSection(rewardedAdManager: rewardedAdManager)
+                    }
+
                     // Progress Section
                     SettingsSection(title: "Progress") {
                         VStack(spacing: 16) {
@@ -174,6 +180,11 @@ struct SettingsView: View {
                 }
                 .padding()
             }
+
+            if !preferences.isAdFree {
+                BannerAdView()
+                    .frame(height: 50)
+            }
         }
         .alert("Reset Progress", isPresented: $showResetConfirmation) {
             Button("Cancel", role: .cancel) {}
@@ -185,6 +196,114 @@ struct SettingsView: View {
         }
     }
 }
+
+// MARK: - Remove Ads Section
+
+private struct RemoveAdsSection: View {
+    @EnvironmentObject var preferences: UserPreferences
+    @ObservedObject var rewardedAdManager: RewardedAdManager
+
+    var body: some View {
+        let colors = preferences.theme.colors
+
+        if preferences.isAdFree {
+            AdFreeRow(accentColor: colors.accent)
+        } else {
+            AdNotFreeRows(
+                rewardedAdManager: rewardedAdManager,
+                accentColor: colors.accent
+            )
+        }
+    }
+}
+
+private struct AdFreeRow: View {
+    let accentColor: Color
+
+    var body: some View {
+        HStack {
+            Image(systemName: "nosign")
+                .foregroundColor(.white.opacity(0.7))
+            Text("Remove Ads")
+                .foregroundColor(.white)
+            Spacer()
+            Text("Removed")
+                .foregroundColor(accentColor)
+                .fontWeight(.bold)
+        }
+    }
+}
+
+private struct AdNotFreeRows: View {
+    @EnvironmentObject var preferences: UserPreferences
+    @ObservedObject var rewardedAdManager: RewardedAdManager
+    let accentColor: Color
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "nosign")
+                    .foregroundColor(.white.opacity(0.7))
+                Text("Remove Ads")
+                    .foregroundColor(.white)
+                Spacer()
+                Text("\(preferences.rewardAdCount) / \(AdConstants.requiredAdCountForAdFree)")
+                    .foregroundColor(accentColor)
+                    .fontWeight(.bold)
+            }
+
+            ProgressView(
+                value: Double(preferences.rewardAdCount),
+                total: Double(AdConstants.requiredAdCountForAdFree)
+            )
+            .tint(accentColor)
+
+            WatchAdButton(rewardedAdManager: rewardedAdManager, accentColor: accentColor)
+        }
+    }
+}
+
+private struct WatchAdButton: View {
+    @EnvironmentObject var preferences: UserPreferences
+    @ObservedObject var rewardedAdManager: RewardedAdManager
+    let accentColor: Color
+
+    private var buttonLabel: String {
+        if rewardedAdManager.isAdLoading { return "Loading Ad..." }
+        if !rewardedAdManager.isAdLoaded { return "Ad Not Ready" }
+        return "Watch Ad"
+    }
+
+    var body: some View {
+        Button(action: onWatchAdTapped) {
+            Text(buttonLabel)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(accentColor)
+                .cornerRadius(10)
+        }
+        .disabled(!rewardedAdManager.isAdLoaded || rewardedAdManager.isAdLoading)
+    }
+
+    private func onWatchAdTapped() {
+        rewardedAdManager.showAd(
+            onRewarded: { handleReward() },
+            onDismissed: {}
+        )
+    }
+
+    private func handleReward() {
+        preferences.rewardAdCount += 1
+        if preferences.rewardAdCount >= AdConstants.requiredAdCountForAdFree {
+            preferences.isAdFree = true
+            preferences.rewardAdCount = 0
+        }
+    }
+}
+
+// MARK: - Reusable sub-components (unchanged)
 
 struct SettingsSection<Content: View>: View {
     let title: String
@@ -259,6 +378,7 @@ struct ThemeButton: View {
 #Preview {
     SettingsView(navigateTo: { _ in })
         .environmentObject(UserPreferences.shared)
+        .environmentObject(RewardedAdManager())
         .preferredColorScheme(.dark)
         .background(Color(hex: 0x1E1F28))
 }

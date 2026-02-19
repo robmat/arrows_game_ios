@@ -40,7 +40,7 @@ enum ArrowThickness: String, CaseIterable {
 class UserPreferences: ObservableObject {
     static let shared = UserPreferences()
 
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
 
     // MARK: - Keys
     private enum Keys {
@@ -57,6 +57,9 @@ class UserPreferences: ObservableObject {
         static let isIntroCompleted = "isIntroCompleted"
         static let isWinVideosEnabled = "isWinVideosEnabled"
         static let arrowThickness = "arrowThickness"
+        static let isAdFree = "isAdFree"
+        static let rewardAdCount = "rewardAdCount"
+        static let gamesCompleted = "gamesCompleted"
     }
 
     // MARK: - Published Properties
@@ -90,6 +93,19 @@ class UserPreferences: ObservableObject {
 
     @Published var arrowThickness: ArrowThickness {
         didSet { defaults.set(arrowThickness.rawValue, forKey: Keys.arrowThickness) }
+    }
+
+    @Published var isAdFree: Bool {
+        didSet { defaults.set(isAdFree, forKey: Keys.isAdFree) }
+    }
+
+    @Published var rewardAdCount: Int {
+        didSet { defaults.set(rewardAdCount, forKey: Keys.rewardAdCount) }
+    }
+
+    var gamesCompleted: Int {
+        get { defaults.integer(forKey: Keys.gamesCompleted) }
+        set { defaults.set(newValue, forKey: Keys.gamesCompleted) }
     }
 
     var initialLevel: GameLevel? {
@@ -136,7 +152,9 @@ class UserPreferences: ObservableObject {
     }
 
     // MARK: - Initialization
+
     private init() {
+        self.defaults = UserDefaults.standard
         levelNumber = defaults.integer(forKey: Keys.levelNumber).nonZeroOr(1)
         theme = AppTheme(rawValue: defaults.string(forKey: Keys.theme) ?? "") ?? .dark
         animationSpeed = AnimationSpeed(rawValue: defaults.string(forKey: Keys.animationSpeed) ?? "") ?? .medium
@@ -145,6 +163,23 @@ class UserPreferences: ObservableObject {
         isFillBoardEnabled = defaults.object(forKey: Keys.isFillBoardEnabled) as? Bool ?? false
         isWinVideosEnabled = defaults.object(forKey: Keys.isWinVideosEnabled) as? Bool ?? false
         arrowThickness = ArrowThickness(rawValue: defaults.string(forKey: Keys.arrowThickness) ?? "") ?? .medium
+        isAdFree = defaults.object(forKey: Keys.isAdFree) as? Bool ?? false
+        rewardAdCount = defaults.integer(forKey: Keys.rewardAdCount)
+    }
+
+    /// Initializer for isolated test instances using a named suite.
+    init(suiteName: String) {
+        self.defaults = UserDefaults(suiteName: suiteName) ?? .standard
+        levelNumber = defaults.integer(forKey: Keys.levelNumber).nonZeroOr(1)
+        theme = AppTheme(rawValue: defaults.string(forKey: Keys.theme) ?? "") ?? .dark
+        animationSpeed = AnimationSpeed(rawValue: defaults.string(forKey: Keys.animationSpeed) ?? "") ?? .medium
+        isVibrationEnabled = defaults.object(forKey: Keys.isVibrationEnabled) as? Bool ?? true
+        isSoundsEnabled = defaults.object(forKey: Keys.isSoundsEnabled) as? Bool ?? true
+        isFillBoardEnabled = defaults.object(forKey: Keys.isFillBoardEnabled) as? Bool ?? false
+        isWinVideosEnabled = defaults.object(forKey: Keys.isWinVideosEnabled) as? Bool ?? false
+        arrowThickness = ArrowThickness(rawValue: defaults.string(forKey: Keys.arrowThickness) ?? "") ?? .medium
+        isAdFree = defaults.object(forKey: Keys.isAdFree) as? Bool ?? false
+        rewardAdCount = defaults.integer(forKey: Keys.rewardAdCount)
     }
 
     // MARK: - Transient State (not persisted)

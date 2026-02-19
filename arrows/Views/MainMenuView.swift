@@ -18,71 +18,78 @@ struct MainMenuView: View {
     var body: some View {
         let colors = preferences.theme.colors
 
-        VStack(spacing: 40) {
-            Spacer()
+        VStack(spacing: 0) {
+            VStack(spacing: 40) {
+                Spacer()
 
-            // App Title
-            VStack(spacing: 8) {
-                Image(systemName: "arrow.up.right.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(colors.accent)
+                // App Title
+                VStack(spacing: 8) {
+                    Image(systemName: "arrow.up.right.circle.fill")
+                        .font(.system(size: 80))
+                        .foregroundColor(colors.accent)
 
-                Text("Arrows")
-                    .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(.white)
+                    Text("Arrows")
+                        .font(.system(size: 48, weight: .bold))
+                        .foregroundColor(.white)
 
-                Text("Level \(preferences.levelNumber)")
-                    .font(.title2)
-                    .foregroundColor(colors.snake)
-            }
-
-            Spacer()
-
-            // Play Button
-            Button(action: {
-                navigateTo(.game)
-            }) {
-                HStack {
-                    Image(systemName: "play.fill")
+                    Text("Level \(preferences.levelNumber)")
                         .font(.title2)
-                    Text("Play")
-                        .font(.title2.bold())
+                        .foregroundColor(colors.snake)
                 }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(colors.accent)
-                .cornerRadius(16)
-            }
-            .padding(.horizontal, 40)
 
-            // Generator Button
-            Button(action: {
-                navigateTo(.generator)
-            }) {
-                HStack {
-                    Image(systemName: isGeneratorUnlocked ? "sparkles" : "lock.fill")
-                        .font(.title3)
-                    Text(isGeneratorUnlocked ? "Generator" : "Generator (Level \(GameConstants.generatorUnlockLevel))")
-                        .font(.title3)
-                }
-                .foregroundColor(isGeneratorUnlocked ? colors.accent : .gray)
-            }
-            .disabled(!isGeneratorUnlocked)
+                Spacer()
 
-            // Settings Button
-            Button(action: {
-                navigateTo(.settings)
-            }) {
-                HStack {
-                    Image(systemName: "gearshape.fill")
-                        .font(.title3)
-                    Text("Settings")
-                        .font(.title3)
+                // Play Button
+                Button(action: {
+                    navigateTo(.game)
+                }) {
+                    HStack {
+                        Image(systemName: "play.fill")
+                            .font(.title2)
+                        Text("Play")
+                            .font(.title2.bold())
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(colors.accent)
+                    .cornerRadius(16)
                 }
-                .foregroundColor(colors.accent)
+                .padding(.horizontal, 40)
+
+                // Generator Button
+                Button(action: {
+                    navigateTo(.generator)
+                }) {
+                    HStack {
+                        Image(systemName: isGeneratorUnlocked ? "sparkles" : "lock.fill")
+                            .font(.title3)
+                        Text(isGeneratorUnlocked ? "Generator" : "Generator (Level \(GameConstants.generatorUnlockLevel))")
+                            .font(.title3)
+                    }
+                    .foregroundColor(isGeneratorUnlocked ? colors.accent : .gray)
+                }
+                .disabled(!isGeneratorUnlocked)
+
+                // Settings Button
+                Button(action: {
+                    navigateTo(.settings)
+                }) {
+                    HStack {
+                        Image(systemName: "gearshape.fill")
+                            .font(.title3)
+                        Text("Settings")
+                            .font(.title3)
+                    }
+                    .foregroundColor(colors.accent)
+                }
+                .padding(.bottom, 16)
             }
-            .padding(.bottom, 40)
+
+            if !preferences.isAdFree {
+                BannerAdView()
+                    .frame(height: 50)
+            }
         }
     }
 }
