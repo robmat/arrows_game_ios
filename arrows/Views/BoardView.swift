@@ -201,8 +201,9 @@ struct BoardView: View {
         // Progress p: 0 = normal, 1 = fully removed
         let p = CGFloat(removalProgress ?? 0)
 
-        // Head slides out by shift amount
-        let shift = cellSize * GameConstants.snakeMoveDistFactor * p
+        // Head slides out by shift amount — matches tail speed (tail travels (count-1)*cellSize)
+        let bodyLength = CGFloat(max(snake.body.count - 1, 1))
+        let shift = cellSize * bodyLength * p
 
         // Alpha fades from 1 to 0
         var alpha = 1.0 - p

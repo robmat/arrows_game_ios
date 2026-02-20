@@ -40,7 +40,6 @@ enum GameConstants {
     static let guidanceDashOff: CGFloat = 10
     static let snakeTailWidth: CGFloat = 0.08         // Tail/body stroke width (relative to cell size)
     static let boardCornerRadiusFactor: CGFloat = 0.3
-    static let snakeMoveDistFactor: CGFloat = 1.2
     static let arrowHeadStrokeWidthFactor: CGFloat = 0.3
     static let flashDuration: TimeInterval = 3.0
     static let flashPulseDuration: TimeInterval = 0.25
