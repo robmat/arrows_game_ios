@@ -16,6 +16,7 @@ struct GameView: View {
     @State private var showIntro = false
     @State private var showGuidanceLines = false
     @State private var guidanceAlpha: CGFloat = 0
+    @State private var boardFrame: CGRect = .zero
 
     var body: some View {
         let colors = preferences.theme.colors
@@ -44,6 +45,12 @@ struct GameView: View {
                     LoadingView(progress: engine.loadingProgress)
                 } else {
                     BoardView(engine: engine, guidanceAlpha: guidanceAlpha)
+                        .background(GeometryReader { geo in
+                            Color.clear.preference(
+                                key: BoardFrameKey.self,
+                                value: geo.frame(in: .named("gameRoot"))
+                            )
+                        })
                         .padding()
                 }
 
@@ -120,28 +127,56 @@ struct GameView: View {
                 .transition(.opacity)
             }
 
-            // Intro Tutorial Overlay
-            if showIntro {
-                IntroOverlay {
-                    showIntro = false
-                    preferences.isIntroCompleted = true
-                }
-                .transition(.opacity)
+            // Intro Tutorial Finger
+            if showIntro && !boardFrame.isEmpty {
+                IntroFingerView(
+                    headPosition: headScreenPosition(in: boardFrame),
+                    onDismiss: { dismissIntro() }
+                )
+                .transition(.opacity.animation(.easeInOut))
             }
         }
+        .coordinateSpace(name: "gameRoot")
+        .onPreferenceChange(BoardFrameKey.self) { boardFrame = $0 }
         .animation(.easeInOut, value: engine.isGameWon)
         .animation(.easeInOut, value: engine.isGameOver)
-        .animation(.easeInOut, value: showIntro)
         .onChange(of: engine.isLoading) { isLoading in
             if !isLoading && !preferences.isIntroCompleted {
                 showIntro = true
             }
+        }
+        .onChange(of: engine.level.snakes.count) { _ in
+            if showIntro { dismissIntro() }
         }
         .onChange(of: engine.isGameWon) { isWon in
             if isWon {
                 preferences.gamesCompleted += 1
             }
         }
+    }
+
+    private func dismissIntro() {
+        showIntro = false
+        preferences.isIntroCompleted = true
+    }
+
+    private func headScreenPosition(in frame: CGRect) -> CGPoint {
+        guard let snake = engine.level.snakes.first else { return .zero }
+        let head = snake.head
+        let level = engine.level
+        let size = frame.size
+        let margin = min(size.width, size.height) * 0.05
+        let cellSize = min(
+            (size.width - margin * 2) / CGFloat(level.width),
+            (size.height - margin * 2) / CGFloat(level.height)
+        )
+        let boardWidth = cellSize * CGFloat(level.width)
+        let boardHeight = cellSize * CGFloat(level.height)
+        let drawOffsetX = (size.width - boardWidth) / 2
+        let drawOffsetY = (size.height - boardHeight) / 2
+        let cx = drawOffsetX + (CGFloat(head.x) + 0.5) * cellSize
+        let cy = drawOffsetY + (CGFloat(head.y) + 0.5) * cellSize
+        return CGPoint(x: frame.minX + cx, y: frame.minY + cy)
     }
 
     private func onHintRequested() {
@@ -172,40 +207,37 @@ struct GameView: View {
     }
 }
 
-// MARK: - Intro Tutorial Overlay
+// MARK: - Board Frame Preference Key
 
-struct IntroOverlay: View {
-    @EnvironmentObject var preferences: UserPreferences
+private struct BoardFrameKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
+    }
+}
+
+// MARK: - Intro Tutorial Finger
+
+struct IntroFingerView: View {
+    let headPosition: CGPoint
     let onDismiss: () -> Void
+    @State private var tiltAngle: Double = 120
 
     var body: some View {
-        let colors = preferences.theme.colors
-
-        ZStack {
-            Color.black.opacity(0.85)
-                .ignoresSafeArea()
-                .onTapGesture {} // consume taps
-
-            VStack(spacing: 24) {
-                Text("Tap the arrowhead\nto remove the arrow")
-                    .font(.title2.bold())
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-
-                Button(action: onDismiss) {
-                    Text("Got it!")
-                        .font(.title3.bold())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 12)
-                        .background(colors.accent)
-                        .cornerRadius(12)
+        Image(systemName: "hand.point.up.left.fill")
+            .font(.system(size: 52))
+            .foregroundColor(.white)
+            .shadow(color: .black.opacity(0.7), radius: 8, x: 1, y: 1)
+            .rotationEffect(.degrees(tiltAngle))
+            // Offset so the finger tip aligns above the head (tip ~26pt below icon center after rotation)
+            .position(x: headPosition.x, y: headPosition.y - 52)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.45).repeatForever(autoreverses: true)) {
+                    tiltAngle = 150
                 }
             }
-            .padding(32)
-            .background(Color.white.opacity(0.05))
-            .cornerRadius(16)
-        }
+            .onTapGesture { onDismiss() }
+            .allowsHitTesting(true)
     }
 }
 

@@ -32,13 +32,16 @@ struct BoardView: View {
             .simultaneousGesture(
                 MagnificationGesture()
                     .onChanged { value in
-                        engine.onTransform(translation: .zero, scale: value)
+                        engine.onMagnificationChanged(value)
+                    }
+                    .onEnded { _ in
+                        engine.onMagnificationEnded()
                     }
             )
             .simultaneousGesture(
                 DragGesture()
                     .onChanged { value in
-                        engine.onTransform(translation: value.translation, scale: 1.0)
+                        engine.onTranslationChanged(value.translation)
                     }
             )
             .contentShape(Rectangle())

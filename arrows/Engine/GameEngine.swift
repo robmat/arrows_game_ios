@@ -31,6 +31,7 @@ class GameEngine: ObservableObject {
     @Published var scale: CGFloat = 1.0
     @Published var offsetX: CGFloat = 0
     @Published var offsetY: CGFloat = 0
+    private var lastMagnification: CGFloat = 1.0
 
     @Published var removalProgress: [Int: Float] = [:]
     @Published var flashingSnakeId: Int? = nil
@@ -118,10 +119,19 @@ class GameEngine: ObservableObject {
         resetTransformation()
     }
 
-    func onTransform(translation: CGSize, scale: CGFloat) {
-        self.scale = max(0.5, min(3.0, self.scale * scale))
-        self.offsetX += translation.width
-        self.offsetY += translation.height
+    func onMagnificationChanged(_ value: CGFloat) {
+        let delta = value / lastMagnification
+        lastMagnification = value
+        scale = max(0.5, min(3.0, scale * delta))
+    }
+
+    func onMagnificationEnded() {
+        lastMagnification = 1.0
+    }
+
+    func onTranslationChanged(_ translation: CGSize) {
+        offsetX += translation.width
+        offsetY += translation.height
     }
 
     func addLife() {
