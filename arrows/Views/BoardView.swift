@@ -51,6 +51,7 @@ struct BoardView: View {
             .scaleEffect(engine.scale)
             .offset(x: engine.offsetX, y: engine.offsetY)
         }
+        .clipped()
         .onAppear { startFlashTimer() }
         .onDisappear { flashTimer?.invalidate() }
     }
