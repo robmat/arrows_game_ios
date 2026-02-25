@@ -171,14 +171,15 @@ class GameEngine: ObservableObject {
         let config = LevelProgression.calculateLevelConfiguration(levelNum: levelNumber)
         let generator = self.gameGenerator
 
-        Task.detached { [weak self] in
+        let fillTheBoard = preferences.isFillBoardEnabled
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let params = GenerationParams(
                 width: config.width,
                 height: config.height,
                 maxSnakeLength: config.maxSnakeLength,
-                fillTheBoard: UserPreferences.shared.isFillBoardEnabled,
+                fillTheBoard: fillTheBoard,
                 onProgress: { progress in
-                    Task { @MainActor in
+                    DispatchQueue.main.async {
                         self?.loadingProgress = progress
                     }
                 }
@@ -186,7 +187,7 @@ class GameEngine: ObservableObject {
 
             let newLevel = generator.generateSolvableLevel(params: params)
 
-            await MainActor.run { [weak self] in
+            DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 self.initialLevel = newLevel
                 self.level = newLevel
@@ -229,7 +230,7 @@ class GameEngine: ObservableObject {
         let fillBoard = preferences.isFillBoardEnabled
         let generator = self.gameGenerator
 
-        Task.detached { [weak self] in
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let params = GenerationParams(
                 width: config.width,
                 height: config.height,
@@ -237,7 +238,7 @@ class GameEngine: ObservableObject {
                 fillTheBoard: fillBoard,
                 boardShape: boardShape,
                 onProgress: { progress in
-                    Task { @MainActor in
+                    DispatchQueue.main.async {
                         self?.loadingProgress = progress
                     }
                 }
@@ -245,7 +246,7 @@ class GameEngine: ObservableObject {
 
             let newLevel = generator.generateSolvableLevel(params: params)
 
-            await MainActor.run { [weak self] in
+            DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 self.initialLevel = newLevel
                 self.level = newLevel
