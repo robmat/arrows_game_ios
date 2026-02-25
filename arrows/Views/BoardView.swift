@@ -259,7 +259,7 @@ struct BoardView: View {
             )
         } else {
             // Single cell snake - draw short tail
-            let tailLength = cellSize * 0.2
+            let tailLength = cellSize * max(0.2 - GameConstants.singleCellTailShrink, 0)
             let tailStartX = lineEndX - CGFloat(snake.headDirection.dx) * (tailLength + cornerRadius)
             let tailStartY = lineEndY - CGFloat(snake.headDirection.dy) * (tailLength + cornerRadius)
 
@@ -274,11 +274,12 @@ struct BoardView: View {
             )
         }
 
-        // Draw arrow head at shifted position
+        // Draw arrow head at shifted position (pulled back slightly from tip)
         let headScale = preferences.arrowThickness.headScaleFactor
         let arrowHeadSize = cellSize * GameConstants.arrowHeadLength * headScale
-        let triangleCenterX = lineEndX + CGFloat(snake.headDirection.dx) * (arrowHeadSize * 0.5)
-        let triangleCenterY = lineEndY + CGFloat(snake.headDirection.dy) * (arrowHeadSize * 0.5)
+        let pullBack = cellSize * GameConstants.arrowHeadPullBack
+        let triangleCenterX = lineEndX + CGFloat(snake.headDirection.dx) * (arrowHeadSize * 0.5 - pullBack)
+        let triangleCenterY = lineEndY + CGFloat(snake.headDirection.dy) * (arrowHeadSize * 0.5 - pullBack)
 
         drawArrowHead(
             context: context,

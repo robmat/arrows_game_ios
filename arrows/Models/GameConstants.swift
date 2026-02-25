@@ -58,6 +58,8 @@ enum GameConstants {
     static let arrowHeadWidth: CGFloat = 0.12       // Width of arrow head base (relative to cell size)
     static let arrowHeadOffset: CGFloat = 0.35      // Distance from cell center to arrow head tip
     static let tailEndOffset: CGFloat = 0.35        // Distance from cell center where tail ends (should meet arrow base)
+    static let arrowHeadPullBack: CGFloat = 0.08    // Pull arrowhead back opposite to its direction (relative to cell size)
+    static let singleCellTailShrink: CGFloat = 0.1  // Shorten single-cell arrow tail (0 = full length, >0 = shorter, relative to cell size)
 
     // MARK: - Input Handling
     static let cellCenter: CGFloat = 0.5
