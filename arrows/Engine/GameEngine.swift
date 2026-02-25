@@ -130,8 +130,8 @@ class GameEngine: ObservableObject {
     }
 
     func onTranslationChanged(_ translation: CGSize) {
-        offsetX += translation.width
-        offsetY += translation.height
+        offsetX += translation.width * scale
+        offsetY += translation.height * scale
     }
 
     func addLife() {
