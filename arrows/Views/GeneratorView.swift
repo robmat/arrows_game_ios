@@ -16,6 +16,11 @@ struct GeneratorView: View {
     @State private var selectedShape: String = "rectangular"
     @State private var showWarning = false
 
+    @State private var isVisible = false
+    @State private var buttonPulseScale: CGFloat = 1.0
+    @State private var widthValueScale: CGFloat = 1.0
+    @State private var heightValueScale: CGFloat = 1.0
+
     private var maxSize: Float {
         preferences.isFillBoardEnabled
             ? GameConstants.generatorMaxSizeFillBoard
@@ -50,7 +55,7 @@ struct GeneratorView: View {
 
             ScrollView {
                 VStack(spacing: 24) {
-                    // Size Section
+                    // Size Section — Width
                     SettingsSection(title: "Board Size") {
                         VStack(spacing: 16) {
                             // Width Slider
@@ -62,6 +67,7 @@ struct GeneratorView: View {
                                     Text("\(Int(width))")
                                         .foregroundColor(colors.snake)
                                         .font(.headline)
+                                        .scaleEffect(widthValueScale)
                                 }
                                 Slider(
                                     value: $width,
@@ -80,6 +86,7 @@ struct GeneratorView: View {
                                     Text("\(Int(height))")
                                         .foregroundColor(colors.snake)
                                         .font(.headline)
+                                        .scaleEffect(heightValueScale)
                                 }
                                 Slider(
                                     value: $height,
@@ -90,6 +97,7 @@ struct GeneratorView: View {
                             }
                         }
                     }
+                    .generatorEntry(isVisible: isVisible, index: 0)
 
                     // Shape Section
                     SettingsSection(title: "Board Shape") {
@@ -100,7 +108,8 @@ struct GeneratorView: View {
                             ShapeCard(
                                 name: "Rectangular",
                                 isSelected: selectedShape == "rectangular",
-                                accentColor: colors.accent
+                                accentColor: colors.accent,
+                                popInDelay: 0
                             ) {
                                 Image(systemName: "square.grid.3x3.fill")
                                     .font(.title2)
@@ -109,11 +118,12 @@ struct GeneratorView: View {
                             .onTapGesture { selectedShape = "rectangular" }
 
                             // Custom shapes
-                            ForEach(ShapeRegistry.shapes) { shape in
+                            ForEach(Array(ShapeRegistry.shapes.enumerated()), id: \.element.id) { index, shape in
                                 ShapeCard(
                                     name: shape.displayName,
                                     isSelected: selectedShape == shape.id,
-                                    accentColor: colors.accent
+                                    accentColor: colors.accent,
+                                    popInDelay: GameConstants.generatorShapePopInStagger * Double(index + 1)
                                 ) {
                                     if let uiImage = shape.image {
                                         Image(uiImage: uiImage)
@@ -130,6 +140,7 @@ struct GeneratorView: View {
                             }
                         }
                     }
+                    .generatorEntry(isVisible: isVisible, index: 1)
 
                     // Generate Button
                     Button(action: { onGenerateTapped() }) {
@@ -145,6 +156,8 @@ struct GeneratorView: View {
                         .background(colors.accent)
                         .cornerRadius(16)
                     }
+                    .scaleEffect(buttonPulseScale)
+                    .generatorEntry(isVisible: isVisible, index: 2)
                 }
                 .padding()
             }
@@ -153,6 +166,22 @@ struct GeneratorView: View {
                 BannerAdView()
                     .frame(height: 50)
             }
+        }
+        .onAppear {
+            isVisible = true
+
+            withAnimation(
+                .easeInOut(duration: GameConstants.generatorButtonPulseDuration)
+                    .repeatForever(autoreverses: true)
+            ) {
+                buttonPulseScale = GameConstants.generatorButtonPulseScale
+            }
+        }
+        .onChange(of: Int(width)) { _ in
+            bounceValue($widthValueScale)
+        }
+        .onChange(of: Int(height)) { _ in
+            bounceValue($heightValueScale)
         }
         .onChange(of: maxSize) { newMax in
             if width > newMax { width = newMax }
@@ -165,6 +194,17 @@ struct GeneratorView: View {
             }
         } message: {
             Text("Starting a custom game will discard your currently saved game. Do you want to proceed?")
+        }
+    }
+
+    private func bounceValue(_ scale: Binding<CGFloat>) {
+        withAnimation(.spring(response: 0.2, dampingFraction: 0.4)) {
+            scale.wrappedValue = GameConstants.generatorValueBounceScale
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.generatorValueBounceHold) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                scale.wrappedValue = 1.0
+            }
         }
     }
 
@@ -197,7 +237,10 @@ struct ShapeCard<Content: View>: View {
     let name: String
     let isSelected: Bool
     let accentColor: Color
+    var popInDelay: TimeInterval = 0
     @ViewBuilder let content: Content
+
+    @State private var hasPopped = false
 
     var body: some View {
         VStack(spacing: 6) {
@@ -209,12 +252,17 @@ struct ShapeCard<Content: View>: View {
                     RoundedRectangle(cornerRadius: 8)
                         .strokeBorder(isSelected ? accentColor : Color.clear, lineWidth: 2)
                 )
+                .scaleEffect(isSelected ? GameConstants.generatorShapeSelectedScale : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.5), value: isSelected)
 
             Text(name)
                 .font(.caption2)
                 .foregroundColor(.white)
                 .lineLimit(1)
         }
+        .scaleEffect(hasPopped ? 1.0 : 0.01)
+        .animation(.spring(response: 0.35, dampingFraction: 0.6).delay(popInDelay), value: hasPopped)
+        .onAppear { hasPopped = true }
     }
 }
 

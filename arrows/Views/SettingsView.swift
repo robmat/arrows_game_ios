@@ -12,6 +12,7 @@ struct SettingsView: View {
     @EnvironmentObject var rewardedAdManager: RewardedAdManager
     let navigateTo: (AppScreen) -> Void
     @State private var showResetConfirmation = false
+    @State private var isVisible = false
 
     var body: some View {
         let colors = preferences.theme.colors
@@ -62,6 +63,7 @@ struct SettingsView: View {
                             }
                         }
                     }
+                    .settingsEntry(isVisible: isVisible, index: 0)
 
                     // Gameplay Section
                     SettingsSection(title: "Gameplay") {
@@ -123,11 +125,13 @@ struct SettingsView: View {
                             )
                         }
                     }
+                    .settingsEntry(isVisible: isVisible, index: 1)
 
                     // Remove Ads Section
                     SettingsSection(title: "Ads") {
                         RemoveAdsSection(rewardedAdManager: rewardedAdManager)
                     }
+                    .settingsEntry(isVisible: isVisible, index: 2)
 
                     // Progress Section
                     SettingsSection(title: "Progress") {
@@ -156,6 +160,7 @@ struct SettingsView: View {
                             }
                         }
                     }
+                    .settingsEntry(isVisible: isVisible, index: 3)
 
                     // About Section
                     SettingsSection(title: "About") {
@@ -177,6 +182,7 @@ struct SettingsView: View {
                             }
                         }
                     }
+                    .settingsEntry(isVisible: isVisible, index: 4)
                 }
                 .padding()
             }
@@ -186,6 +192,7 @@ struct SettingsView: View {
                     .frame(height: 50)
             }
         }
+        .onAppear { isVisible = true }
         .alert("Reset Progress", isPresented: $showResetConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Reset", role: .destructive) {

@@ -11,6 +11,11 @@ struct MainMenuView: View {
     @EnvironmentObject var preferences: UserPreferences
     let navigateTo: (AppScreen) -> Void
 
+    @State private var isVisible = false
+    @State private var iconRotation: Double = 0
+    @State private var iconPulseScale: CGFloat = 1.0
+    @State private var buttonPulseScale: CGFloat = 1.0
+
     private var isGeneratorUnlocked: Bool {
         preferences.levelNumber >= GameConstants.generatorUnlockLevel
     }
@@ -27,6 +32,8 @@ struct MainMenuView: View {
                     Image(systemName: "arrow.up.right.circle.fill")
                         .font(.system(size: 80))
                         .foregroundColor(colors.accent)
+                        .rotationEffect(.degrees(iconRotation))
+                        .scaleEffect(iconPulseScale)
 
                     Text("Arrows")
                         .font(.system(size: 48, weight: .bold))
@@ -36,6 +43,7 @@ struct MainMenuView: View {
                         .font(.title2)
                         .foregroundColor(colors.snake)
                 }
+                .homeEntry(isVisible: isVisible, index: 0)
 
                 Spacer()
 
@@ -55,7 +63,9 @@ struct MainMenuView: View {
                     .background(colors.accent)
                     .cornerRadius(16)
                 }
+                .scaleEffect(buttonPulseScale)
                 .padding(.horizontal, 40)
+                .homeEntry(isVisible: isVisible, index: 1)
 
                 // Generator Button
                 Button(action: {
@@ -70,6 +80,7 @@ struct MainMenuView: View {
                     .foregroundColor(isGeneratorUnlocked ? colors.accent : .gray)
                 }
                 .disabled(!isGeneratorUnlocked)
+                .homeEntry(isVisible: isVisible, index: 2)
 
                 // Settings Button
                 Button(action: {
@@ -84,11 +95,36 @@ struct MainMenuView: View {
                     .foregroundColor(colors.accent)
                 }
                 .padding(.bottom, 16)
+                .homeEntry(isVisible: isVisible, index: 3)
             }
 
             if !preferences.isAdFree {
                 BannerAdView()
                     .frame(height: 50)
+            }
+        }
+        .onAppear {
+            isVisible = true
+
+            withAnimation(
+                .linear(duration: GameConstants.homeIconRotateDuration)
+                    .repeatForever(autoreverses: false)
+            ) {
+                iconRotation = 360
+            }
+
+            withAnimation(
+                .easeInOut(duration: GameConstants.homeIconPulseDuration)
+                    .repeatForever(autoreverses: true)
+            ) {
+                iconPulseScale = GameConstants.homeIconPulseScale
+            }
+
+            withAnimation(
+                .easeInOut(duration: GameConstants.homeButtonPulseDuration)
+                    .repeatForever(autoreverses: true)
+            ) {
+                buttonPulseScale = GameConstants.homeButtonPulseScale
             }
         }
     }

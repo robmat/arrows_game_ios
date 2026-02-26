@@ -74,6 +74,32 @@ enum GameConstants {
     static let videoTotalDuration: TimeInterval = 5.0
     static let congratulationsFontSize: CGFloat = 32
 
+    // MARK: - Home Screen Animations
+    static let homeEnterDuration: TimeInterval = 0.4
+    static let homeStaggerDelay: TimeInterval = 0.12
+    static let homeEnterOffset: CGFloat = 60
+    static let homeIconRotateDuration: TimeInterval = 8.0
+    static let homeIconPulseDuration: TimeInterval = 1.8
+    static let homeIconPulseScale: CGFloat = 1.12
+    static let homeButtonPulseDuration: TimeInterval = 1.4
+    static let homeButtonPulseScale: CGFloat = 1.03
+
+    // MARK: - Settings Screen Animations
+    static let settingsEnterDuration: TimeInterval = 0.35
+    static let settingsStaggerDelay: TimeInterval = 0.1
+    static let settingsEnterOffset: CGFloat = 80
+
+    // MARK: - Generator Screen Animations
+    static let generatorEnterDuration: TimeInterval = 0.35
+    static let generatorStaggerDelay: TimeInterval = 0.08
+    static let generatorEnterOffset: CGFloat = 40
+    static let generatorButtonPulseDuration: TimeInterval = 1.2
+    static let generatorButtonPulseScale: CGFloat = 1.04
+    static let generatorValueBounceScale: CGFloat = 1.3
+    static let generatorValueBounceHold: TimeInterval = 0.08
+    static let generatorShapeSelectedScale: CGFloat = 1.08
+    static let generatorShapePopInStagger: TimeInterval = 0.04
+
     // MARK: - Confetti Colors
     static let confettiColors: [Color] = [
         Color(hex: 0xfce18a),

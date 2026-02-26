@@ -36,7 +36,10 @@ struct GameTopBar: View {
             Spacer()
 
             // Hint Button
-            TopBarButton(icon: "lightbulb.fill", action: onHint)
+            TopBarButton(icon: "lightbulb.fill", action: {
+                print("Hint: button tapped")
+                onHint()
+            })
 
             // Restart Button
             TopBarButton(icon: "arrow.counterclockwise", action: onRestart)

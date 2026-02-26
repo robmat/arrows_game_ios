@@ -14,10 +14,6 @@ struct ArrowsApp: App {
     @StateObject private var interstitialAdManager = InterstitialAdManager()
     @StateObject private var rewardedAdManager = RewardedAdManager()
 
-    init() {
-        MobileAds.initialize()
-    }
-
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -25,9 +21,13 @@ struct ArrowsApp: App {
                 .environmentObject(interstitialAdManager)
                 .environmentObject(rewardedAdManager)
                 .onAppear {
-                    if !preferences.isAdFree {
-                        interstitialAdManager.loadAd()
-                        rewardedAdManager.loadAd()
+                    guard !preferences.isAdFree else { return }
+                    DispatchQueue.global(qos: .utility).async {
+                        MobileAds.initialize()
+                        DispatchQueue.main.async {
+                            interstitialAdManager.loadAd()
+                            rewardedAdManager.loadAd()
+                        }
                     }
                 }
         }

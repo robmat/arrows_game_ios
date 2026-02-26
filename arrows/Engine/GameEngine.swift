@@ -109,9 +109,13 @@ class GameEngine: ObservableObject {
     }
 
     func showHint() {
+        print("Hint: showHint() called, scale=\(scale), offsetX=\(offsetX), offsetY=\(offsetY)")
         resetTransformation()
         if let removableId = SolvabilityChecker.findRemovableSnake(level) {
+            print("Hint: flashing snake id=\(removableId)")
             flashSnake(id: removableId)
+        } else {
+            print("Hint: no removable snake found!")
         }
     }
 

@@ -37,6 +37,7 @@ struct GameView: View {
                 )
                 .padding(.horizontal)
                 .padding(.top, 8)
+                .zIndex(1)
 
                 Spacer()
 
@@ -88,6 +89,7 @@ struct GameView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 8)
+                    .zIndex(1)
                 }
 
                 if !preferences.isAdFree {
@@ -180,14 +182,23 @@ struct GameView: View {
     }
 
     private func onHintRequested() {
+        print("Hint: onHintRequested called, isAdFree=\(preferences.isAdFree), isAdLoaded=\(rewardedAdManager.isAdLoaded)")
         guard !preferences.isAdFree && rewardedAdManager.isAdLoaded else {
+            print("Hint: calling engine.showHint() directly")
             engine.showHint()
             return
         }
         var rewarded = false
+        print("Hint: showing rewarded ad")
         rewardedAdManager.showAd(
-            onRewarded: { rewarded = true },
-            onDismissed: { if rewarded { engine.showHint() } }
+            onRewarded: {
+                print("Hint: rewarded callback fired")
+                rewarded = true
+            },
+            onDismissed: {
+                print("Hint: ad dismissed, rewarded=\(rewarded)")
+                if rewarded { engine.showHint() }
+            }
         )
     }
 
