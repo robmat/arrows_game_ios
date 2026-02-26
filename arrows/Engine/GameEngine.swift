@@ -35,6 +35,8 @@ class GameEngine: ObservableObject {
 
     @Published var removalProgress: [Int: Float] = [:]
     @Published var flashingSnakeId: Int? = nil
+    @Published var entryProgress: [Int: Float] = [:]
+    @Published var isEntryAnimating: Bool = false
 
     // MARK: - Private Properties
     private var initialLevel: GameLevel?
@@ -42,6 +44,7 @@ class GameEngine: ObservableObject {
     private let preferences: UserPreferences
     private var cancellables = Set<AnyCancellable>()
     private var removalTasks: [Int: Task<Void, Never>] = [:]
+    private var entryTasks: [Task<Void, Never>] = []
 
     // MARK: - Settings
     var animationSpeed: AnimationSpeed {
@@ -106,6 +109,7 @@ class GameEngine: ObservableObject {
         clearFlash()
         clearRemovalProgress()
         saveState()
+        animateEntry()
     }
 
     func showHint() {
@@ -152,7 +156,7 @@ class GameEngine: ObservableObject {
     }
 
     func onTap(at point: CGPoint, containerSize: CGSize) {
-        guard !isLoading && lives > 0 && !isGameWon && !isGameOver else { return }
+        guard !isLoading && !isEntryAnimating && lives > 0 && !isGameWon && !isGameOver else { return }
 
         let gridCoords = transformTapToGrid(tapPoint: point, containerSize: containerSize)
         guard let tappedSnake = findTappedSnake(at: gridCoords) else { return }
@@ -203,6 +207,7 @@ class GameEngine: ObservableObject {
                 self.clearRemovalProgress()
                 self.isLoading = false
                 self.saveInitialState()
+                self.animateEntry()
             }
         }
     }
@@ -262,6 +267,7 @@ class GameEngine: ObservableObject {
                 self.clearRemovalProgress()
                 self.isLoading = false
                 self.saveInitialState()
+                self.animateEntry()
             }
         }
     }
@@ -411,6 +417,87 @@ class GameEngine: ObservableObject {
         }
         removalTasks.removeAll()
         removalProgress.removeAll()
+    }
+
+    private func clearEntryProgress() {
+        for task in entryTasks {
+            task.cancel()
+        }
+        entryTasks.removeAll()
+        entryProgress.removeAll()
+        isEntryAnimating = false
+    }
+
+    private func animateEntry() {
+        clearEntryProgress()
+
+        let snakes = level.snakes
+        guard !snakes.isEmpty else { return }
+
+        isEntryAnimating = true
+        for snake in snakes {
+            entryProgress[snake.id] = 0
+        }
+
+        // Sort by distance from board center → ripple outward
+        let centerX = Float(level.width) / 2
+        let centerY = Float(level.height) / 2
+
+        let sorted = snakes.sorted { a, b in
+            func centroid(_ s: Snake) -> (Float, Float) {
+                let cx = s.body.reduce(Float(0)) { $0 + Float($1.x) } / Float(s.body.count)
+                let cy = s.body.reduce(Float(0)) { $0 + Float($1.y) } / Float(s.body.count)
+                return (cx, cy)
+            }
+            let (ax, ay) = centroid(a)
+            let (bx, by) = centroid(b)
+            let aDist = (ax - centerX) * (ax - centerX) + (ay - centerY) * (ay - centerY)
+            let bDist = (bx - centerX) * (bx - centerX) + (by - centerY) * (by - centerY)
+            return aDist < bDist
+        }
+
+        let duration = GameConstants.snakeEntryDuration
+        let stagger = GameConstants.snakeEntryStagger
+        let frameDelay = GameConstants.removalFrameDelay
+
+        for (index, snake) in sorted.enumerated() {
+            let delay = stagger * Double(index)
+            let snakeId = snake.id
+
+            let task = Task { @MainActor in
+                if delay > 0 {
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                }
+                guard !Task.isCancelled else { return }
+
+                let startTime = Date()
+                while !Task.isCancelled {
+                    let elapsed = Date().timeIntervalSince(startTime)
+                    let progress = min(Float(elapsed / duration), 1.0)
+                    // Ease-out cubic for smooth deceleration
+                    let eased = 1.0 - pow(1.0 - progress, 3)
+                    entryProgress[snakeId] = eased
+
+                    if progress >= 1.0 {
+                        entryProgress.removeValue(forKey: snakeId)
+                        break
+                    }
+
+                    try? await Task.sleep(nanoseconds: UInt64(frameDelay * 1_000_000_000))
+                }
+            }
+            entryTasks.append(task)
+        }
+
+        // Clear isEntryAnimating after all snakes finish
+        let totalDuration = stagger * Double(sorted.count - 1) + duration + 0.05
+        let completionTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64(totalDuration * 1_000_000_000))
+            if !Task.isCancelled {
+                isEntryAnimating = false
+            }
+        }
+        entryTasks.append(completionTask)
     }
 
     private func resetTransformation() {

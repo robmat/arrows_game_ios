@@ -44,8 +44,13 @@ struct GameView: View {
                 // Game Board
                 if engine.isLoading {
                     LoadingView(progress: engine.loadingProgress)
+                        .transition(.opacity)
                 } else {
                     BoardView(engine: engine, guidanceAlpha: guidanceAlpha)
+                        .transition(
+                            .scale(scale: GameConstants.boardEntryScaleFrom)
+                                .combined(with: .opacity)
+                        )
                         .background(GeometryReader { geo in
                             Color.clear.preference(
                                 key: BoardFrameKey.self,
@@ -140,6 +145,7 @@ struct GameView: View {
         }
         .coordinateSpace(name: "gameRoot")
         .onPreferenceChange(BoardFrameKey.self) { boardFrame = $0 }
+        .animation(.spring(response: 0.5, dampingFraction: 0.75), value: engine.isLoading)
         .animation(.easeInOut, value: engine.isGameWon)
         .animation(.easeInOut, value: engine.isGameOver)
         .onChange(of: engine.isLoading) { isLoading in

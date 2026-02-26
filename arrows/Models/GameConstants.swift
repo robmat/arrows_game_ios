@@ -100,6 +100,11 @@ enum GameConstants {
     static let generatorShapeSelectedScale: CGFloat = 1.08
     static let generatorShapePopInStagger: TimeInterval = 0.04
 
+    // MARK: - Board Entry Animations
+    static let boardEntryScaleFrom: CGFloat = 0.92
+    static let snakeEntryDuration: TimeInterval = 0.45
+    static let snakeEntryStagger: TimeInterval = 0.05
+
     // MARK: - Confetti Colors
     static let confettiColors: [Color] = [
         Color(hex: 0xfce18a),

@@ -107,6 +107,7 @@ struct BoardView: View {
         for snake in level.snakes {
             let isFlashing = engine.flashingSnakeId == snake.id
             let removalProgress = engine.removalProgress[snake.id]
+            let entryProgress = engine.entryProgress[snake.id]
 
             drawSnake(
                 context: context,
@@ -116,7 +117,8 @@ struct BoardView: View {
                 offsetY: offsetY,
                 snakeColor: colors.snake,
                 isFlashing: isFlashing,
-                removalProgress: removalProgress
+                removalProgress: removalProgress,
+                entryProgress: entryProgress
             )
         }
     }
@@ -131,8 +133,9 @@ struct BoardView: View {
         accentColor: Color
     ) {
         for snake in level.snakes {
-            // Skip snakes being removed
+            // Skip snakes being removed or still entering
             if engine.removalProgress[snake.id] != nil { continue }
+            if engine.entryProgress[snake.id] != nil { continue }
 
             let head = snake.body[0]
             let headCx = offsetX + CGFloat(head.x) * cellSize + cellSize / 2
@@ -195,22 +198,33 @@ struct BoardView: View {
         offsetY: CGFloat,
         snakeColor: Color,
         isFlashing: Bool,
-        removalProgress: Float?
+        removalProgress: Float?,
+        entryProgress: Float?
     ) {
         guard !snake.body.isEmpty else { return }
 
         let strokeWidth = cellSize * preferences.arrowThickness.widthFactor
         let cornerRadius = cellSize * GameConstants.arrowHeadOffset
 
-        // Progress p: 0 = normal, 1 = fully removed
-        let p = CGFloat(removalProgress ?? 0)
+        // Determine animation state: entry, removal, or normal
+        let p: CGFloat       // Body reveal parameter (0 = full body, 1 = no body)
+        let shift: CGFloat   // Head slide offset
+        var alpha: CGFloat   // Opacity
 
-        // Head slides out by shift amount — matches tail speed (tail travels (count-1)*cellSize)
-        let bodyLength = CGFloat(max(snake.body.count - 1, 1))
-        let shift = cellSize * bodyLength * p
-
-        // Alpha fades from 1 to 0
-        var alpha = 1.0 - p
+        if let entry = entryProgress {
+            // Entry: body unfurls from head outward, head stays in place
+            let ep = CGFloat(entry)
+            p = 1.0 - ep       // Reverse of removal for body drawing
+            shift = 0           // Head stays anchored
+            alpha = min(ep * 2.5, 1.0)  // Quick fade-in
+        } else {
+            // Normal / removal
+            let rp = CGFloat(removalProgress ?? 0)
+            p = rp
+            let bodyLength = CGFloat(max(snake.body.count - 1, 1))
+            shift = cellSize * bodyLength * rp
+            alpha = 1.0 - rp
+        }
 
         // Color and flashing
         var color = snakeColor
@@ -455,8 +469,8 @@ struct BoardView: View {
             path.addQuadCurve(to: headExit, control: partialControl)
         }
 
-        // If removing, extend line to shifted head position
-        if p > 0 {
+        // If removing (head is shifting), extend line to shifted head position
+        if lineEndX != baseLineEndX0 || lineEndY != baseLineEndY0 {
             path.addLine(to: CGPoint(x: lineEndX, y: lineEndY))
         }
 
