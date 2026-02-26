@@ -16,7 +16,6 @@ struct GameView: View {
     @State private var showIntro = false
     @State private var showGuidanceLines = false
     @State private var guidanceAlpha: CGFloat = 0
-    @State private var boardFrame: CGRect = .zero
 
     var body: some View {
         let colors = preferences.theme.colors
@@ -47,16 +46,23 @@ struct GameView: View {
                         .transition(.opacity)
                 } else {
                     BoardView(engine: engine, guidanceAlpha: guidanceAlpha)
+                        .overlay(
+                            Group {
+                                if showIntro {
+                                    GeometryReader { geo in
+                                        IntroFingerView(
+                                            headPosition: introFingerPosition(in: geo.size),
+                                            onDismiss: { dismissIntro() }
+                                        )
+                                    }
+                                    .transition(.opacity.animation(.easeInOut))
+                                }
+                            }
+                        )
                         .transition(
                             .scale(scale: GameConstants.boardEntryScaleFrom)
                                 .combined(with: .opacity)
                         )
-                        .background(GeometryReader { geo in
-                            Color.clear.preference(
-                                key: BoardFrameKey.self,
-                                value: geo.frame(in: .named("gameRoot"))
-                            )
-                        })
                         .padding()
                 }
 
@@ -134,27 +140,33 @@ struct GameView: View {
                 )
                 .transition(.opacity)
             }
-
-            // Intro Tutorial Finger
-            if showIntro && !boardFrame.isEmpty {
-                IntroFingerView(
-                    headPosition: headScreenPosition(in: boardFrame),
-                    onDismiss: { dismissIntro() }
-                )
-                .transition(.opacity.animation(.easeInOut))
-            }
         }
-        .coordinateSpace(name: "gameRoot")
-        .onPreferenceChange(BoardFrameKey.self) { boardFrame = $0 }
         .animation(.spring(response: 0.5, dampingFraction: 0.75), value: engine.isLoading)
         .animation(.easeInOut, value: engine.isGameWon)
         .animation(.easeInOut, value: engine.isGameOver)
-        .onChange(of: engine.isLoading) { isLoading in
-            if !isLoading && !preferences.isIntroCompleted {
+        .onChange(of: engine.isEntryAnimating) { animating in
+            if !animating && !engine.isLoading && !preferences.isIntroCompleted {
                 showIntro = true
             }
         }
+        .onChange(of: engine.isLoading) { isLoading in
+            if isLoading {
+                showIntro = false
+            } else if !engine.isEntryAnimating && !preferences.isIntroCompleted {
+                showIntro = true
+            }
+        }
+        .onAppear {
+            if !engine.isLoading && !engine.isEntryAnimating && !preferences.isIntroCompleted {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showIntro = true
+                }
+            }
+        }
         .onChange(of: engine.level.snakes.count) { _ in
+            if showIntro { dismissIntro() }
+        }
+        .onChange(of: engine.lives) { _ in
             if showIntro { dismissIntro() }
         }
         .onChange(of: engine.isGameWon) { isWon in
@@ -169,11 +181,21 @@ struct GameView: View {
         preferences.isIntroCompleted = true
     }
 
-    private func headScreenPosition(in frame: CGRect) -> CGPoint {
-        guard let snake = engine.level.snakes.first else { return .zero }
-        let head = snake.head
+    private func introFingerPosition(in size: CGSize) -> CGPoint {
         let level = engine.level
-        let size = frame.size
+        guard !level.snakes.isEmpty else { return .zero }
+
+        let removableId = SolvabilityChecker.findRemovableSnake(level)
+        let snake: Snake
+        if let id = removableId, let found = level.snakes.first(where: { $0.id == id }) {
+            snake = found
+        } else if let first = level.snakes.first {
+            snake = first
+        } else {
+            return .zero
+        }
+
+        let head = snake.head
         let margin = min(size.width, size.height) * 0.05
         let cellSize = min(
             (size.width - margin * 2) / CGFloat(level.width),
@@ -183,9 +205,17 @@ struct GameView: View {
         let boardHeight = cellSize * CGFloat(level.height)
         let drawOffsetX = (size.width - boardWidth) / 2
         let drawOffsetY = (size.height - boardHeight) / 2
+
+        // Cell center in board-local coordinates
         let cx = drawOffsetX + (CGFloat(head.x) + 0.5) * cellSize
         let cy = drawOffsetY + (CGFloat(head.y) + 0.5) * cellSize
-        return CGPoint(x: frame.minX + cx, y: frame.minY + cy)
+
+        // Offset toward arrow head (matches where drawSnake places the arrow)
+        let arrowOffset = cellSize * GameConstants.arrowHeadOffset
+        return CGPoint(
+            x: cx + CGFloat(snake.headDirection.dx) * arrowOffset,
+            y: cy + CGFloat(snake.headDirection.dy) * arrowOffset
+        )
     }
 
     private func onHintRequested() {
@@ -225,33 +255,24 @@ struct GameView: View {
     }
 }
 
-// MARK: - Board Frame Preference Key
-
-private struct BoardFrameKey: PreferenceKey {
-    static var defaultValue: CGRect = .zero
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        value = nextValue()
-    }
-}
-
 // MARK: - Intro Tutorial Finger
 
 struct IntroFingerView: View {
     let headPosition: CGPoint
     let onDismiss: () -> Void
-    @State private var tiltAngle: Double = 120
+    @State private var flashOpacity: Double = 1.0
 
     var body: some View {
         Image(systemName: "hand.point.up.left.fill")
             .font(.system(size: 52))
             .foregroundColor(.white)
             .shadow(color: .black.opacity(0.7), radius: 8, x: 1, y: 1)
-            .rotationEffect(.degrees(tiltAngle))
-            // Offset so the finger tip aligns above the head (tip ~26pt below icon center after rotation)
-            .position(x: headPosition.x, y: headPosition.y - 52)
+            .rotationEffect(.degrees(135))
+            .opacity(flashOpacity)
+            .position(x: headPosition.x - 28, y: headPosition.y - 10)
             .onAppear {
-                withAnimation(.easeInOut(duration: 0.45).repeatForever(autoreverses: true)) {
-                    tiltAngle = 150
+                withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+                    flashOpacity = 0.2
                 }
             }
             .onTapGesture { onDismiss() }

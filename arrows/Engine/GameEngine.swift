@@ -83,6 +83,7 @@ class GameEngine: ObservableObject {
             maxLives = preferences.maxLives
             isGameWon = level.snakes.isEmpty
             isLoading = false
+            animateEntry()
         } else {
             regenerateLevel()
         }
