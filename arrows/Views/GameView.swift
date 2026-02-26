@@ -120,6 +120,7 @@ struct GameView: View {
                         engine.restartLevel()
                     },
                     onMainMenu: {
+                        preferences.clearSavedGame()
                         navigateTo(.mainMenu)
                     },
                     onWatchAd: preferences.isAdFree ? nil : {
