@@ -144,11 +144,20 @@ private struct VideoCelebrationView: View {
 
 // MARK: - Video Player Layer (AVPlayer, muted)
 
+private class VideoPlayerUIView: UIView {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layer.sublayers?
+            .compactMap { $0 as? AVPlayerLayer }
+            .forEach { $0.frame = bounds }
+    }
+}
+
 private struct VideoPlayerLayer: UIViewRepresentable {
     let videoName: String
 
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
+    func makeUIView(context: Context) -> VideoPlayerUIView {
+        let view = VideoPlayerUIView()
         view.backgroundColor = .black
 
         guard let url = Bundle.main.url(forResource: videoName, withExtension: "mp4") else {
@@ -160,7 +169,7 @@ private struct VideoPlayerLayer: UIViewRepresentable {
 
         let playerLayer = AVPlayerLayer(player: player)
         playerLayer.videoGravity = .resizeAspectFill
-        playerLayer.frame = UIScreen.main.bounds
+        playerLayer.frame = view.bounds
         view.layer.addSublayer(playerLayer)
 
         player.play()
@@ -178,7 +187,7 @@ private struct VideoPlayerLayer: UIViewRepresentable {
         return view
     }
 
-    func updateUIView(_ uiView: UIView, context: Context) {}
+    func updateUIView(_ uiView: VideoPlayerUIView, context: Context) {}
 }
 
 // MARK: - Confetti Celebration (original)

@@ -25,7 +25,6 @@ struct BoardView: View {
     var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
-
             Canvas { context, canvasSize in
                 drawBoard(context: context, size: canvasSize)
             }

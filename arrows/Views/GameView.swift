@@ -16,134 +16,130 @@ struct GameView: View {
     @State private var showIntro = false
     @State private var showGuidanceLines = false
     @State private var guidanceAlpha: CGFloat = 0
+    @State private var screenWidth: CGFloat = UIScreen.main.bounds.width
 
     var body: some View {
         let colors = preferences.theme.colors
 
-        ZStack {
-            colors.background
-                .ignoresSafeArea()
+        VStack(spacing: 0) {
+            // Top Bar
+            GameTopBar(
+                levelNumber: engine.levelNumber,
+                lives: engine.lives,
+                maxLives: engine.maxLives,
+                onBack: { navigateTo(.mainMenu) },
+                onRestart: { engine.restartLevel() },
+                onHint: { onHintRequested() }
+            )
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .zIndex(1)
 
-            VStack(spacing: 0) {
-                // Top Bar
-                GameTopBar(
-                    levelNumber: engine.levelNumber,
-                    lives: engine.lives,
-                    maxLives: engine.maxLives,
-                    onBack: { navigateTo(.mainMenu) },
-                    onRestart: { engine.restartLevel() },
-                    onHint: { onHintRequested() }
-                )
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .zIndex(1)
+            Spacer()
 
-                Spacer()
-
-                // Game Board
-                if engine.isLoading {
-                    LoadingView(progress: engine.loadingProgress)
-                        .transition(.opacity)
-                } else {
-                    BoardView(engine: engine, guidanceAlpha: guidanceAlpha)
-                        .overlay(
-                            Group {
-                                if showIntro {
-                                    GeometryReader { geo in
-                                        IntroFingerView(
-                                            headPosition: introFingerPosition(in: geo.size),
-                                            onDismiss: { dismissIntro() }
-                                        )
-                                    }
-                                    .transition(.opacity.animation(.easeInOut))
+            // Game Board
+            if engine.isLoading {
+                LoadingView(progress: engine.loadingProgress)
+                    .transition(.opacity)
+            } else {
+                BoardView(engine: engine, guidanceAlpha: guidanceAlpha)
+                    .overlay(
+                        Group {
+                            if showIntro {
+                                GeometryReader { geo in
+                                    IntroFingerView(
+                                        headPosition: introFingerPosition(in: geo.size),
+                                        onDismiss: { dismissIntro() }
+                                    )
                                 }
+                                .transition(.opacity.animation(.easeInOut))
                             }
-                        )
-                        .transition(
-                            .scale(scale: GameConstants.boardEntryScaleFrom)
-                                .combined(with: .opacity)
-                        )
-                        .padding()
-                }
-
-                Spacer()
-
-                // Bottom buttons
-                if !engine.isLoading {
-                    HStack {
-                        // Reset View button
-                        Button(action: { engine.resetView() }) {
-                            Image(systemName: "scope")
-                                .font(.title3)
-                                .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(colors.accent.opacity(0.3))
-                                .clipShape(Circle())
                         }
-
-                        Spacer()
-
-                        // Guidance Lines toggle
-                        Button(action: {
-                            showGuidanceLines.toggle()
-                            withAnimation(.easeInOut(duration: GameConstants.guidanceAnimDuration)) {
-                                guidanceAlpha = showGuidanceLines ? 1 : 0
-                            }
-                        }) {
-                            Image(systemName: "grid")
-                                .font(.title3)
-                                .foregroundColor(.white)
-                                .frame(width: 44, height: 44)
-                                .background(showGuidanceLines ? colors.accent : colors.accent.opacity(0.3))
-                                .clipShape(Circle())
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 8)
-                    .zIndex(1)
-                }
-
-                if !preferences.isAdFree {
-                    BannerAdView()
-                        .frame(height: 50)
-                }
+                    )
+                    .transition(
+                        .scale(scale: GameConstants.boardEntryScaleFrom)
+                            .combined(with: .opacity)
+                    )
+                    .padding()
             }
 
-            // Win Celebration Overlay
-            if engine.isGameWon {
-                WinCelebrationView(
-                    onContinue: {
-                        onLevelCompleted()
+            Spacer()
+
+            // Bottom buttons
+            if !engine.isLoading {
+                HStack {
+                    // Reset View button
+                    Button(action: { engine.resetView() }) {
+                        Image(systemName: "scope")
+                            .font(.title3)
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(colors.accent.opacity(0.3))
+                            .clipShape(Circle())
                     }
-                )
-                .transition(.opacity)
+
+                    Spacer()
+
+                    // Guidance Lines toggle
+                    Button(action: {
+                        showGuidanceLines.toggle()
+                        withAnimation(.easeInOut(duration: GameConstants.guidanceAnimDuration)) {
+                            guidanceAlpha = showGuidanceLines ? 1 : 0
+                        }
+                    }) {
+                        Image(systemName: "grid")
+                            .font(.title3)
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(showGuidanceLines ? colors.accent : colors.accent.opacity(0.3))
+                            .clipShape(Circle())
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 8)
+                .zIndex(1)
             }
 
-            // Game Over Overlay
-            if engine.isGameOver {
-                GameOverView(
-                    onRetry: {
-                        engine.restartLevel()
-                    },
-                    onMainMenu: {
-                        preferences.clearSavedGame()
-                        navigateTo(.mainMenu)
-                    },
-                    onWatchAd: preferences.isAdFree ? nil : {
-                        rewardedAdManager.showAd(
-                            onRewarded: { engine.grantExtraLife() },
-                            onDismissed: {}
-                        )
-                    },
-                    isAdLoaded: rewardedAdManager.isAdLoaded,
-                    isAdLoading: rewardedAdManager.isAdLoading
-                )
-                .transition(.opacity)
+            if !preferences.isAdFree {
+                BannerAdView()
+                    .frame(height: 50)
             }
         }
-        .animation(.spring(response: 0.5, dampingFraction: 0.75), value: engine.isLoading)
-        .animation(.easeInOut, value: engine.isGameWon)
-        .animation(.easeInOut, value: engine.isGameOver)
+        .frame(maxWidth: screenWidth)
+        .background(colors.background.ignoresSafeArea())
+        .overlay(
+            Group {
+                if engine.isGameWon {
+                    WinCelebrationView(
+                        onContinue: {
+                            onLevelCompleted()
+                        }
+                    )
+                    .transition(.opacity)
+                }
+
+                if engine.isGameOver {
+                    GameOverView(
+                        onRetry: {
+                            engine.restartLevel()
+                        },
+                        onMainMenu: {
+                            preferences.clearSavedGame()
+                            navigateTo(.mainMenu)
+                        },
+                        onWatchAd: preferences.isAdFree ? nil : {
+                            rewardedAdManager.showAd(
+                                onRewarded: { engine.grantExtraLife() },
+                                onDismissed: {}
+                            )
+                        },
+                        isAdLoaded: rewardedAdManager.isAdLoaded,
+                        isAdLoading: rewardedAdManager.isAdLoading
+                    )
+                    .transition(.opacity)
+                }
+            }
+        )
         .onChange(of: engine.isEntryAnimating) { animating in
             if !animating && !engine.isLoading && !preferences.isIntroCompleted {
                 showIntro = true
@@ -172,6 +168,12 @@ struct GameView: View {
         .onChange(of: engine.isGameWon) { isWon in
             if isWon {
                 preferences.gamesCompleted += 1
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            let newWidth = UIScreen.main.bounds.width
+            if abs(newWidth - screenWidth) > 1 {
+                screenWidth = newWidth
             }
         }
     }

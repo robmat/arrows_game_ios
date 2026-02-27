@@ -82,7 +82,9 @@ class GameEngine: ObservableObject {
             lives = preferences.currentLives
             maxLives = preferences.maxLives
             isGameWon = level.snakes.isEmpty
-            isLoading = false
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
+                isLoading = false
+            }
             animateEntry()
         } else {
             regenerateLevel()
@@ -206,7 +208,9 @@ class GameEngine: ObservableObject {
                 self.resetTransformation()
                 self.clearFlash()
                 self.clearRemovalProgress()
-                self.isLoading = false
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
+                    self.isLoading = false
+                }
                 self.saveInitialState()
                 self.animateEntry()
             }
@@ -266,7 +270,9 @@ class GameEngine: ObservableObject {
                 self.resetTransformation()
                 self.clearFlash()
                 self.clearRemovalProgress()
-                self.isLoading = false
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
+                    self.isLoading = false
+                }
                 self.saveInitialState()
                 self.animateEntry()
             }
@@ -334,7 +340,7 @@ class GameEngine: ObservableObject {
             flashSnake(id: snake.id)
             lives -= 1
             if lives <= 0 {
-                isGameOver = true
+                withAnimation(.easeInOut) { isGameOver = true }
                 if isSoundsEnabled {
                     SoundManager.shared.playGameLost()
                 }
@@ -385,7 +391,7 @@ class GameEngine: ObservableObject {
         removalTasks.removeValue(forKey: id)
 
         if level.snakes.isEmpty {
-            isGameWon = true
+            withAnimation(.easeInOut) { isGameWon = true }
             if isSoundsEnabled {
                 SoundManager.shared.playGameWon()
             }
