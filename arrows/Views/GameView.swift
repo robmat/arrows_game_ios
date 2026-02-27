@@ -16,7 +16,6 @@ struct GameView: View {
     @State private var showIntro = false
     @State private var showGuidanceLines = false
     @State private var guidanceAlpha: CGFloat = 0
-    @State private var screenWidth: CGFloat = UIScreen.main.bounds.width
 
     var body: some View {
         let colors = preferences.theme.colors
@@ -105,7 +104,6 @@ struct GameView: View {
                     .frame(height: 50)
             }
         }
-        .frame(maxWidth: screenWidth)
         .background(colors.background.ignoresSafeArea())
         .overlay(
             Group {
@@ -168,12 +166,6 @@ struct GameView: View {
         .onChange(of: engine.isGameWon) { isWon in
             if isWon {
                 preferences.gamesCompleted += 1
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-            let newWidth = UIScreen.main.bounds.width
-            if abs(newWidth - screenWidth) > 1 {
-                screenWidth = newWidth
             }
         }
     }
