@@ -13,12 +13,28 @@ enum AnimationSpeed: String, CaseIterable {
     case high = "High"
     case medium = "Medium"
     case low = "Low"
+
+    var displayName: String {
+        switch self {
+        case .high: return AppStrings.AnimationSpeedName.high
+        case .medium: return AppStrings.AnimationSpeedName.medium
+        case .low: return AppStrings.AnimationSpeedName.low
+        }
+    }
 }
 
 enum ArrowThickness: String, CaseIterable {
     case thin = "Thin"
     case medium = "Medium"
     case thick = "Thick"
+
+    var displayName: String {
+        switch self {
+        case .thin: return AppStrings.ArrowThicknessName.thin
+        case .medium: return AppStrings.ArrowThicknessName.medium
+        case .thick: return AppStrings.ArrowThicknessName.thick
+        }
+    }
 
     var widthFactor: CGFloat {
         switch self {

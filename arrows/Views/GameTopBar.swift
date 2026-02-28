@@ -24,7 +24,7 @@ struct GameTopBar: View {
             Spacer()
 
             // Level Number
-            Text("Level \(levelNumber)")
+            Text(AppStrings.Game.levelNumber(levelNumber))
                 .font(.headline)
                 .foregroundColor(.white)
 
@@ -36,7 +36,7 @@ struct GameTopBar: View {
             Spacer()
 
             // Hint Button
-            TopBarButton(icon: "lightbulb.fill", action: {
+            TopBarButton(icon: "lightbulb.fill", showAdBadge: !preferences.isAdFree, action: {
                 print("Hint: button tapped")
                 onHint()
             })
@@ -50,6 +50,7 @@ struct GameTopBar: View {
 struct TopBarButton: View {
     @EnvironmentObject var preferences: UserPreferences
     let icon: String
+    var showAdBadge: Bool = false
     let action: () -> Void
 
     var body: some View {
@@ -60,6 +61,18 @@ struct TopBarButton: View {
                 .frame(width: 40, height: 40)
                 .background(preferences.theme.colors.topBarButtonBackground)
                 .cornerRadius(10)
+                .overlay(alignment: .topTrailing) {
+                    if showAdBadge {
+                        Text(AppStrings.Game.adBadge)
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 3)
+                            .padding(.vertical, 1)
+                            .background(preferences.theme.colors.accent)
+                            .cornerRadius(4)
+                            .offset(x: 4, y: -4)
+                    }
+                }
         }
     }
 }

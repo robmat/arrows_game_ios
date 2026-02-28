@@ -114,18 +114,7 @@ enum GameConstants {
     ]
 
     // MARK: - Congratulation Messages
-    static let congratulationMessages = [
-        "Super!",
-        "Fantastic!",
-        "Great!",
-        "Good Job!",
-        "Well Done!",
-        "Awesome!",
-        "Excellent!",
-        "Amazing!",
-        "Brilliant!",
-        "Outstanding!"
-    ]
+    static var congratulationMessages: [String] { AppStrings.Congratulations.all }
 }
 
 // MARK: - Color Extension

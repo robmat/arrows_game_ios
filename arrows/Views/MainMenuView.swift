@@ -35,11 +35,11 @@ struct MainMenuView: View {
                                 .rotationEffect(.degrees(iconRotation))
                                 .scaleEffect(iconPulseScale)
 
-                            Text("Arrows")
+                            Text(AppStrings.MainMenu.title)
                                 .font(.system(size: 48, weight: .bold))
                                 .foregroundColor(.white)
 
-                            Text("Level \(preferences.levelNumber)")
+                            Text(AppStrings.MainMenu.levelNumber(preferences.levelNumber))
                                 .font(.title2)
                                 .foregroundColor(colors.snake)
                         }
@@ -52,7 +52,7 @@ struct MainMenuView: View {
                             HStack {
                                 Image(systemName: "play.fill")
                                     .font(.title2)
-                                Text("Play")
+                                Text(AppStrings.MainMenu.play)
                                     .font(.title2.bold())
                             }
                             .foregroundColor(.white)
@@ -72,7 +72,7 @@ struct MainMenuView: View {
                             HStack {
                                 Image(systemName: isGeneratorUnlocked ? "sparkles" : "lock.fill")
                                     .font(.title3)
-                                Text(isGeneratorUnlocked ? "Generator" : "Generator (Level \(GameConstants.generatorUnlockLevel))")
+                                Text(isGeneratorUnlocked ? AppStrings.MainMenu.generator : AppStrings.MainMenu.generatorLocked(GameConstants.generatorUnlockLevel))
                                     .font(.title3)
                             }
                             .foregroundColor(isGeneratorUnlocked ? colors.accent : .gray)
@@ -87,7 +87,7 @@ struct MainMenuView: View {
                             HStack {
                                 Image(systemName: "gearshape.fill")
                                     .font(.title3)
-                                Text("Settings")
+                                Text(AppStrings.MainMenu.settings)
                                     .font(.title3)
                             }
                             .foregroundColor(colors.accent)

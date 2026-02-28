@@ -286,7 +286,7 @@ struct LoadingView: View {
                 .scaleEffect(1.5)
                 .tint(preferences.theme.colors.accent)
 
-            Text("Generating Level...")
+            Text(AppStrings.Game.generatingLevel)
                 .foregroundColor(.white)
                 .font(.headline)
 
@@ -322,7 +322,7 @@ struct GameOverView: View {
                     .font(.system(size: 80))
                     .foregroundColor(CommonColors.heartRed)
 
-                Text("Game Over")
+                Text(AppStrings.Game.gameOver)
                     .font(.system(size: 36, weight: .bold))
                     .foregroundColor(.white)
 
@@ -339,7 +339,7 @@ struct GameOverView: View {
                     Button(action: onRetry) {
                         HStack {
                             Image(systemName: "arrow.counterclockwise")
-                            Text("Try Again")
+                            Text(AppStrings.Game.tryAgain)
                         }
                         .font(.title3.bold())
                         .foregroundColor(.white)
@@ -352,7 +352,7 @@ struct GameOverView: View {
                     Button(action: onMainMenu) {
                         HStack {
                             Image(systemName: "house.fill")
-                            Text("Main Menu")
+                            Text(AppStrings.Game.mainMenu)
                         }
                         .font(.title3)
                         .foregroundColor(colors.accent)
@@ -373,9 +373,9 @@ private struct WatchAdForLifeButton: View {
     let accentColor: Color
 
     private var label: String {
-        if isAdLoading { return "Loading Ad..." }
-        if !isAdLoaded { return "Ad Not Ready" }
-        return "Watch Ad → Get a Life"
+        if isAdLoading { return AppStrings.Game.loadingAd }
+        if !isAdLoaded { return AppStrings.Game.adNotReady }
+        return AppStrings.Game.watchAdGetLife
     }
 
     var body: some View {
@@ -383,6 +383,13 @@ private struct WatchAdForLifeButton: View {
             HStack {
                 Image(systemName: "play.rectangle.fill")
                 Text(label)
+                Text(AppStrings.Game.adBadge)
+                    .font(.caption2.bold())
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(accentColor)
+                    .cornerRadius(4)
             }
             .font(.title3.bold())
             .foregroundColor(.white)

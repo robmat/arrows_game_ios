@@ -28,7 +28,7 @@ struct SettingsView: View {
 
                 Spacer()
 
-                Text("Settings")
+                Text(AppStrings.Settings.title)
                     .font(.title2.bold())
                     .foregroundColor(.white)
 
@@ -44,9 +44,9 @@ struct SettingsView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     // Theme Section
-                    SettingsSection(title: "Appearance") {
+                    SettingsSection(title: AppStrings.Settings.appearance) {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Theme")
+                            Text(AppStrings.Settings.theme)
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
 
@@ -66,17 +66,17 @@ struct SettingsView: View {
                     .settingsEntry(isVisible: isVisible, index: 0)
 
                     // Gameplay Section
-                    SettingsSection(title: "Gameplay") {
+                    SettingsSection(title: AppStrings.Settings.gameplay) {
                         VStack(spacing: 16) {
                             // Animation Speed
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Animation Speed")
+                                Text(AppStrings.Settings.animationSpeed)
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
 
-                                Picker("Animation Speed", selection: $preferences.animationSpeed) {
+                                Picker(AppStrings.Settings.animationSpeed, selection: $preferences.animationSpeed) {
                                     ForEach(AnimationSpeed.allCases, id: \.self) { speed in
-                                        Text(speed.rawValue).tag(speed)
+                                        Text(speed.displayName).tag(speed)
                                     }
                                 }
                                 .pickerStyle(SegmentedPickerStyle())
@@ -84,13 +84,13 @@ struct SettingsView: View {
 
                             // Arrow Thickness
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Arrow Thickness")
+                                Text(AppStrings.Settings.arrowThickness)
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
 
-                                Picker("Arrow Thickness", selection: $preferences.arrowThickness) {
+                                Picker(AppStrings.Settings.arrowThickness, selection: $preferences.arrowThickness) {
                                     ForEach(ArrowThickness.allCases, id: \.self) { thickness in
-                                        Text(thickness.rawValue).tag(thickness)
+                                        Text(thickness.displayName).tag(thickness)
                                     }
                                 }
                                 .pickerStyle(SegmentedPickerStyle())
@@ -98,28 +98,28 @@ struct SettingsView: View {
 
                             // Vibration Toggle
                             SettingsToggle(
-                                title: "Vibration",
+                                title: AppStrings.Settings.vibration,
                                 icon: "iphone.radiowaves.left.and.right",
                                 isOn: $preferences.isVibrationEnabled
                             )
 
                             // Sound Toggle
                             SettingsToggle(
-                                title: "Sound Effects",
+                                title: AppStrings.Settings.soundEffects,
                                 icon: "speaker.wave.2.fill",
                                 isOn: $preferences.isSoundsEnabled
                             )
 
                             // Win Videos Toggle
                             SettingsToggle(
-                                title: "Win videos",
+                                title: AppStrings.Settings.winVideos,
                                 icon: "film.fill",
                                 isOn: $preferences.isWinVideosEnabled
                             )
 
                             // Fill Board Toggle
                             SettingsToggle(
-                                title: "Fill board (slower)",
+                                title: AppStrings.Settings.fillBoard,
                                 icon: "square.grid.4x3.fill",
                                 isOn: $preferences.isFillBoardEnabled
                             )
@@ -128,18 +128,18 @@ struct SettingsView: View {
                     .settingsEntry(isVisible: isVisible, index: 1)
 
                     // Remove Ads Section
-                    SettingsSection(title: "Ads") {
+                    SettingsSection(title: AppStrings.Settings.ads) {
                         RemoveAdsSection(rewardedAdManager: rewardedAdManager)
                     }
                     .settingsEntry(isVisible: isVisible, index: 2)
 
                     // Progress Section
-                    SettingsSection(title: "Progress") {
+                    SettingsSection(title: AppStrings.Settings.progress) {
                         VStack(spacing: 16) {
                             HStack {
                                 Image(systemName: "flag.fill")
                                     .foregroundColor(colors.accent)
-                                Text("Current Level")
+                                Text(AppStrings.Settings.currentLevel)
                                     .foregroundColor(.white)
                                 Spacer()
                                 Text("\(preferences.levelNumber)")
@@ -150,7 +150,7 @@ struct SettingsView: View {
                             Button(action: { showResetConfirmation = true }) {
                                 HStack {
                                     Image(systemName: "arrow.counterclockwise")
-                                    Text("Reset Progress")
+                                    Text(AppStrings.Settings.resetProgress)
                                 }
                                 .foregroundColor(CommonColors.heartRed)
                                 .frame(maxWidth: .infinity)
@@ -163,21 +163,21 @@ struct SettingsView: View {
                     .settingsEntry(isVisible: isVisible, index: 3)
 
                     // About Section
-                    SettingsSection(title: "About") {
+                    SettingsSection(title: AppStrings.Settings.about) {
                         VStack(spacing: 12) {
                             HStack {
-                                Text("Version")
+                                Text(AppStrings.Settings.version)
                                     .foregroundColor(.white)
                                 Spacer()
-                                Text("1.0")
+                                Text(AppStrings.Settings.versionNumber)
                                     .foregroundColor(.gray)
                             }
 
                             HStack {
-                                Text("Based on")
+                                Text(AppStrings.Settings.basedOn)
                                     .foregroundColor(.white)
                                 Spacer()
-                                Text("Arrows Android")
+                                Text(AppStrings.Settings.basedOnValue)
                                     .foregroundColor(.gray)
                             }
                         }
@@ -193,13 +193,13 @@ struct SettingsView: View {
             }
         }
         .onAppear { isVisible = true }
-        .alert("Reset Progress", isPresented: $showResetConfirmation) {
-            Button("Cancel", role: .cancel) {}
-            Button("Reset", role: .destructive) {
+        .alert(AppStrings.Settings.resetProgress, isPresented: $showResetConfirmation) {
+            Button(AppStrings.Settings.cancel, role: .cancel) {}
+            Button(AppStrings.Settings.reset, role: .destructive) {
                 preferences.resetProgress()
             }
         } message: {
-            Text("This will reset your progress to Level 1. Are you sure?")
+            Text(AppStrings.Settings.resetConfirmationMessage)
         }
     }
 }
@@ -231,10 +231,10 @@ private struct AdFreeRow: View {
         HStack {
             Image(systemName: "nosign")
                 .foregroundColor(.white.opacity(0.7))
-            Text("Remove Ads")
+            Text(AppStrings.Settings.removeAds)
                 .foregroundColor(.white)
             Spacer()
-            Text("Removed")
+            Text(AppStrings.Settings.removed)
                 .foregroundColor(accentColor)
                 .fontWeight(.bold)
         }
@@ -251,7 +251,7 @@ private struct AdNotFreeRows: View {
             HStack {
                 Image(systemName: "nosign")
                     .foregroundColor(.white.opacity(0.7))
-                Text("Remove Ads")
+                Text(AppStrings.Settings.removeAds)
                     .foregroundColor(.white)
                 Spacer()
                 Text("\(preferences.rewardAdCount) / \(AdConstants.requiredAdCountForAdFree)")
@@ -276,9 +276,9 @@ private struct WatchAdButton: View {
     let accentColor: Color
 
     private var buttonLabel: String {
-        if rewardedAdManager.isAdLoading { return "Loading Ad..." }
-        if !rewardedAdManager.isAdLoaded { return "Ad Not Ready" }
-        return "Watch Ad"
+        if rewardedAdManager.isAdLoading { return AppStrings.Game.loadingAd }
+        if !rewardedAdManager.isAdLoaded { return AppStrings.Game.adNotReady }
+        return AppStrings.Settings.watchAd
     }
 
     var body: some View {
@@ -373,7 +373,7 @@ struct ThemeButton: View {
                             .frame(width: 20, height: 20)
                     )
 
-                Text(theme.rawValue)
+                Text(theme.displayName)
                     .font(.caption2)
                     .foregroundColor(.white)
                     .lineLimit(1)

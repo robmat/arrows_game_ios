@@ -41,7 +41,7 @@ struct GeneratorView: View {
 
                 Spacer()
 
-                Text("Generator")
+                Text(AppStrings.Generator.title)
                     .font(.title2.bold())
                     .foregroundColor(.white)
 
@@ -56,12 +56,12 @@ struct GeneratorView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     // Size Section — Width
-                    SettingsSection(title: "Board Size") {
+                    SettingsSection(title: AppStrings.Generator.boardSize) {
                         VStack(spacing: 16) {
                             // Width Slider
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
-                                    Text("Width")
+                                    Text(AppStrings.Generator.width)
                                         .foregroundColor(.white)
                                     Spacer()
                                     Text("\(Int(width))")
@@ -80,7 +80,7 @@ struct GeneratorView: View {
                             // Height Slider
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
-                                    Text("Height")
+                                    Text(AppStrings.Generator.height)
                                         .foregroundColor(.white)
                                     Spacer()
                                     Text("\(Int(height))")
@@ -100,13 +100,13 @@ struct GeneratorView: View {
                     .generatorEntry(isVisible: isVisible, index: 0)
 
                     // Shape Section
-                    SettingsSection(title: "Board Shape") {
+                    SettingsSection(title: AppStrings.Generator.boardShape) {
                         LazyVGrid(columns: [
                             GridItem(.adaptive(minimum: 70), spacing: 12)
                         ], spacing: 12) {
                             // Rectangular (default)
                             ShapeCard(
-                                name: "Rectangular",
+                                name: AppStrings.Generator.rectangular,
                                 isSelected: selectedShape == "rectangular",
                                 accentColor: colors.accent,
                                 popInDelay: 0
@@ -147,7 +147,7 @@ struct GeneratorView: View {
                         HStack {
                             Image(systemName: "sparkles")
                                 .font(.title2)
-                            Text("Generate & Start")
+                            Text(AppStrings.Generator.generateAndStart)
                                 .font(.title2.bold())
                         }
                         .foregroundColor(.white)
@@ -187,13 +187,13 @@ struct GeneratorView: View {
             if width > newMax { width = newMax }
             if height > newMax { height = newMax }
         }
-        .alert("Discard Progress?", isPresented: $showWarning) {
-            Button("Cancel", role: .cancel) {}
-            Button("Proceed", role: .destructive) {
+        .alert(AppStrings.Generator.discardProgress, isPresented: $showWarning) {
+            Button(AppStrings.Generator.cancel, role: .cancel) {}
+            Button(AppStrings.Generator.proceed, role: .destructive) {
                 startCustomGame()
             }
         } message: {
-            Text("Starting a custom game will discard your currently saved game. Do you want to proceed?")
+            Text(AppStrings.Generator.discardMessage)
         }
     }
 

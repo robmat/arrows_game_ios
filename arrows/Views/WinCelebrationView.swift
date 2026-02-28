@@ -38,7 +38,7 @@ private struct VideoCelebrationView: View {
         self.onContinue = onContinue
         let index = Int.random(in: 1...GameConstants.winVideosCount)
         _videoName = State(initialValue: "win\(index)")
-        _congratsMessage = State(initialValue: GameConstants.congratulationMessages.randomElement() ?? "Well Done!")
+        _congratsMessage = State(initialValue: GameConstants.congratulationMessages.randomElement() ?? AppStrings.WinCelebration.fallback)
     }
 
     var body: some View {
@@ -200,7 +200,7 @@ private struct ConfettiCelebrationView: View {
     @State private var confettiParticles: [ConfettiParticle] = []
     @State private var showContinueButton = false
     @State private var hasContinued = false
-    @State private var congratsMessage = GameConstants.congratulationMessages.randomElement() ?? "Well Done!"
+    @State private var congratsMessage = GameConstants.congratulationMessages.randomElement() ?? AppStrings.WinCelebration.fallback
 
     var body: some View {
         let colors = preferences.theme.colors
@@ -240,7 +240,7 @@ private struct ConfettiCelebrationView: View {
                 if showContinueButton {
                     Button(action: safeContinue) {
                         HStack {
-                            Text("Continue")
+                            Text(AppStrings.WinCelebration.continueButton)
                                 .font(.title2.bold())
                             Image(systemName: "arrow.right")
                                 .font(.title2)

@@ -17,6 +17,17 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var displayName: String {
+        switch self {
+        case .dark: return AppStrings.ThemeName.dark
+        case .green: return AppStrings.ThemeName.green
+        case .red: return AppStrings.ThemeName.red
+        case .yellow: return AppStrings.ThemeName.yellow
+        case .orange: return AppStrings.ThemeName.orange
+        case .blackAndWhite: return AppStrings.ThemeName.blackAndWhite
+        }
+    }
+
     var colors: ThemeColors {
         switch self {
         case .dark: return ThemeColors.dark
