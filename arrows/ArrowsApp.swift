@@ -37,7 +37,6 @@ struct ArrowsApp: App {
 struct ContentView: View {
     @EnvironmentObject var preferences: UserPreferences
     @State private var currentScreen: AppScreen = .mainMenu
-    @State private var screenWidth: CGFloat = UIScreen.main.bounds.width
 
     var body: some View {
         ZStack {
@@ -55,14 +54,7 @@ struct ContentView: View {
                 GeneratorView(navigateTo: { currentScreen = $0 })
             }
         }
-        .frame(maxWidth: screenWidth)
         .preferredColorScheme(.dark)
-        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-            let newWidth = UIScreen.main.bounds.width
-            if abs(newWidth - screenWidth) > 1 {
-                screenWidth = newWidth
-            }
-        }
     }
 }
 
