@@ -5,6 +5,7 @@
 //  SwiftUI App entry point
 //
 
+import AppTrackingTransparency
 import GoogleMobileAds
 import SwiftUI
 
@@ -22,11 +23,13 @@ struct ArrowsApp: App {
                 .environmentObject(rewardedAdManager)
                 .onAppear {
                     guard !preferences.isAdFree else { return }
-                    DispatchQueue.global(qos: .utility).async {
-                        MobileAds.initialize()
-                        DispatchQueue.main.async {
-                            interstitialAdManager.loadAd()
-                            rewardedAdManager.loadAd()
+                    ATTrackingManager.requestTrackingAuthorization { _ in
+                        DispatchQueue.global(qos: .utility).async {
+                            MobileAds.initialize()
+                            DispatchQueue.main.async {
+                                interstitialAdManager.loadAd()
+                                rewardedAdManager.loadAd()
+                            }
                         }
                     }
                 }

@@ -16,9 +16,9 @@ enum AdConstants {
     static let interstitialAdUnitId = "ca-app-pub-3940256099942544/4411468910"
     static let rewardedAdUnitId = "ca-app-pub-3940256099942544/1712485313"
     #else
-    static let bannerAdUnitId = "REPLACE_WITH_IOS_BANNER_AD_UNIT_ID"
-    static let interstitialAdUnitId = "REPLACE_WITH_IOS_INTERSTITIAL_AD_UNIT_ID"
-    static let rewardedAdUnitId = "REPLACE_WITH_IOS_REWARDED_AD_UNIT_ID"
+    static let bannerAdUnitId = "ca-app-pub-9667420067790140/4109995034"
+    static let interstitialAdUnitId = "ca-app-pub-9667420067790140/4092519441"
+    static let rewardedAdUnitId = "ca-app-pub-9667420067790140/1630007634"
     #endif
     // App ID is set via ADMOB_APP_ID build setting → arrows/Info.plist → GADApplicationIdentifier
 
