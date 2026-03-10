@@ -69,9 +69,10 @@ enum AppStrings {
         static let resetConfirmationMessage = String(localized: "This will reset your progress to Level 1. Are you sure?")
         static let about = String(localized: "About")
         static let version = String(localized: "Version")
-        static let versionNumber = String(localized: "1.0")
+        static let versionNumber = String(localized: "1.1")
         static let basedOn = String(localized: "Based on")
         static let basedOnValue = String(localized: "Arrows Android")
+        static let writeUs = String(localized: "Write Us")
     }
 
     // MARK: - Generator

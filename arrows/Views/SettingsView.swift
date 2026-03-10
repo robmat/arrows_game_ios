@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct SettingsView: View {
     @EnvironmentObject var preferences: UserPreferences
@@ -180,6 +181,21 @@ struct SettingsView: View {
                                 Text(AppStrings.Settings.basedOnValue)
                                     .foregroundColor(.gray)
                             }
+
+                            Divider().background(Color.white.opacity(0.1))
+
+                            Button(action: openSupportEmail) {
+                                HStack {
+                                    Image(systemName: "envelope")
+                                        .foregroundColor(colors.accent)
+                                    Text(AppStrings.Settings.writeUs)
+                                        .foregroundColor(.white)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                            }
                         }
                     }
                     .settingsEntry(isVisible: isVisible, index: 4)
@@ -200,6 +216,30 @@ struct SettingsView: View {
             }
         } message: {
             Text(AppStrings.Settings.resetConfirmationMessage)
+        }
+    }
+
+    private func openSupportEmail() {
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        let device = UIDevice.current
+        let body = """
+
+
+        ---
+        App: Arrows Untangle \(appVersion) (\(build))
+        Device: \(device.model)
+        iOS: \(device.systemVersion)
+        """
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = "support@emberfox.online"
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "Arrows iOS support"),
+            URLQueryItem(name: "body", value: body)
+        ]
+        if let url = components.url {
+            UIApplication.shared.open(url)
         }
     }
 }

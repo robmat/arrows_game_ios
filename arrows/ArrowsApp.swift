@@ -14,6 +14,7 @@ struct ArrowsApp: App {
     @StateObject private var preferences = UserPreferences.shared
     @StateObject private var interstitialAdManager = InterstitialAdManager()
     @StateObject private var rewardedAdManager = RewardedAdManager()
+    @State private var hasInitializedAds = false
 
     var body: some Scene {
         WindowGroup {
@@ -21,8 +22,9 @@ struct ArrowsApp: App {
                 .environmentObject(preferences)
                 .environmentObject(interstitialAdManager)
                 .environmentObject(rewardedAdManager)
-                .onAppear {
-                    guard !preferences.isAdFree else { return }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                    guard !hasInitializedAds, !preferences.isAdFree else { return }
+                    hasInitializedAds = true
                     ATTrackingManager.requestTrackingAuthorization { _ in
                         DispatchQueue.global(qos: .utility).async {
                             MobileAds.initialize()
