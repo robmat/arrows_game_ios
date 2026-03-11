@@ -15,6 +15,7 @@ struct MainMenuView: View {
     @State private var iconRotation: Double = 0
     @State private var iconPulseScale: CGFloat = 1.0
     @State private var buttonPulseScale: CGFloat = 1.0
+    @State private var showLockedAlert = false
 
     private var isGeneratorUnlocked: Bool {
         preferences.levelNumber >= GameConstants.generatorUnlockLevel
@@ -67,7 +68,11 @@ struct MainMenuView: View {
 
                         // Generator Button
                         Button(action: {
-                            navigateTo(.generator)
+                            if isGeneratorUnlocked {
+                                navigateTo(.generator)
+                            } else {
+                                showLockedAlert = true
+                            }
                         }) {
                             HStack {
                                 Image(systemName: isGeneratorUnlocked ? "sparkles" : "lock.fill")
@@ -77,7 +82,6 @@ struct MainMenuView: View {
                             }
                             .foregroundColor(isGeneratorUnlocked ? colors.accent : .gray)
                         }
-                        .disabled(!isGeneratorUnlocked)
                         .homeEntry(isVisible: isVisible, index: 2)
 
                         // Settings Button
@@ -103,6 +107,11 @@ struct MainMenuView: View {
                 BannerAdView()
                     .frame(height: 50)
             }
+        }
+        .alert(AppStrings.MainMenu.generator, isPresented: $showLockedAlert) {
+            Button(AppStrings.MainMenu.ok, role: .cancel) {}
+        } message: {
+            Text(AppStrings.MainMenu.generatorUnlockMessage(GameConstants.generatorUnlockLevel))
         }
         .onAppear {
             isVisible = true

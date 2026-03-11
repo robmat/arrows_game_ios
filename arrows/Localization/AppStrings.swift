@@ -23,8 +23,14 @@ enum AppStrings {
         }
 
         static func generatorLocked(_ level: Int) -> String {
-            String(localized: "Generator (Level \(level))")
+            String(localized: "Generator (Unlocks at Level \(level))")
         }
+
+        static func generatorUnlockMessage(_ level: Int) -> String {
+            String(localized: "Master the basics first! The Level Generator unlocks at Level \(level).")
+        }
+
+        static let ok = String(localized: "OK")
     }
 
     // MARK: - Game
